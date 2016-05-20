@@ -1,0 +1,27 @@
+{
+  "name": "atom-node",
+  "version": "1.0.0",
+  "description": "IronSource Atom NodeJS SDK",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jacckson/atom-node.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Jacckson/atom-node/issues"
+  },
+  "homepage": "https://github.com/Jacckson/atom-node#readme",
+  "dependencies": {
+    "bluebird": "^3.4.0",
+    "btoa": "^1.1.2",
+    "co": "^4.6.0",
+    "koa": "^1.2.0",
+    "querystring": "^0.2.0",
+    "request": "^2.72.0"
+  }
+}
