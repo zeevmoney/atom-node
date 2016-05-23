@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Jacckson/atom-node.git"
+    "url": "git+https://github.com/IronSource/atom-node.git"
   },
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Jacckson/atom-node/issues"
+    "url": "https://github.com/IronSource/atom-node/issues"
   },
-  "homepage": "https://github.com/Jacckson/atom-node#readme",
+  "homepage": "https://github.com/IronSource/atom-node#readme",
   "dependencies": {
     "bluebird": "^3.4.0",
     "btoa": "^1.1.2",
