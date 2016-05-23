@@ -34,11 +34,15 @@ class IronSourceAtom {
   putEvents (params, callback) {
     params = params || {};
     if (!params.table) {
-      throw new Error('Stream is required');
+      let err = new Error('Stream is required');
+      console.log(err);
+      return;
     }
   
     if (!params.data || !(params.data instanceof Array) || !params.data.length) {
-      throw new Error('Data (must be not empty array) is required');
+      let err = new Error('Data (must be not empty array) is required');
+      console.log(err);
+      return;
     }
   
     params.apiVersion = this.apiVersion;
@@ -66,9 +70,9 @@ class Request {
       json: true,
       body: params
     }, function(err, res, body) {
-      console.log(err);
-      if(err) return callback(err, body, res.statusCode);
-      else return callback(null, body, res.statusCode);
+      if (err || (res.statusCode >= 400 || res.statusCode < 500)) return callback(err, body, res.statusCode);
+      else if (res.statusCode >= 200 && res.statusCode < 400) return callback(null, body, res.statusCode);
+
     });
   }
 
@@ -79,9 +83,8 @@ class Request {
       headers: this.headers,
       json: true
     }, function(err, res, body) {
-      console.log(err);
-      if (err) return callback(err, body, res.statusCode);
-      else return callback(null, body, res.statusCode);
+      if (err || (res.statusCode >= 400 || res.statusCode < 500)) return callback(err, body, res.statusCode);
+      else if (res.statusCode >= 200 && res.statusCode < 400) return callback(null, body, res.statusCode);
     })
   }
 
@@ -89,7 +92,7 @@ class Request {
 
 let atom = new IronSourceAtom();
 
-atom.putEvents({"table": 'ibest', "data": ['asd']}, function(err, data, status){
+atom.putEvents({"table": 'ibtest', "data": ['asd']}, function(err, data, status){
   console.log(err, status);
   console.log(data);
 });
