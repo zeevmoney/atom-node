@@ -1,0 +1,8 @@
+langulage: node_js
+script:
+- npm test
+node_js:
+- 4.4.4
+before_install:
+- npm i
+after_script:

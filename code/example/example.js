@@ -2,10 +2,10 @@
 
 const ISAtom = require('../src');
 let atom = new ISAtom({
-  auth: 'asdadad341dzdf3125'
+  auth: ''
 });
 
-atom.putEvent({"table": "ibtest", "data": "test"}).then(function(res){
+atom.putEvent({"table": "ibstest", "data": "test"}).then(function(res){
   console.log('PutEvents POST success:');
   console.log(res);
 }).catch(function(err){
@@ -13,7 +13,7 @@ atom.putEvent({"table": "ibtest", "data": "test"}).then(function(res){
   console.log(err);
 });
 
-atom.putEvent({"tabe": "ibtest","data": "asd", "method": "GET"}).then(function(res){
+atom.putEvent({"table": "ibtest","data": "asd", "method": "GET"}).then(function(res){
   console.log('PutEvents GET success:');
   console.log(res);
 }).catch(function(e){
