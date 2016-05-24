@@ -5,6 +5,7 @@ const config = require('./../config');
 const Promise = require('bluebird');
 const request = require('request');
 const btoa = require('btoa');
+const crypto = require('crypto');
 
 module.exports = class Request {
   constructor(endpoint, params) {
@@ -19,6 +20,7 @@ module.exports = class Request {
   post(endpoint) {
     let self = this;
     return new Promise(function(resolve, reject) {
+      self.params.data = self.params.auth ? crypto.createHmac('sha256', self.params.auth).update(JSON.stringify(self.params.data)).digest('hex') : self.params.data;
       request({
         url: endpoint,
         method: "POST",
@@ -26,7 +28,7 @@ module.exports = class Request {
         json: true,
         body: self.params
       }, function(err, res, body){
-        if (err || (res.statusCode >= 400 && res.statusCode < 500)) return reject(err ? err : body); // server response err in body
+        if (err || (res.statusCode >= 400 && res.statusCode < 500)) return reject(err ? err : body);
         else if (res.statusCode >= 200 && res.statusCode < 400) resolve(body);
         else {
           if (self.timer >= 2 * 60 * 1000) {
@@ -44,6 +46,7 @@ module.exports = class Request {
 
   get(endpoint) {
     let self = this;
+    self.params.data = self.params.auth ? crypto.createHmac('sha256', self.params.auth).update(JSON.stringify(self.params.data)).digest('hex') : self.params.data;
     return new Promise(function(resolve, reject) {
       request({
         url: endpoint + '?data=' + btoa(JSON.stringify(self.params)),
@@ -51,7 +54,7 @@ module.exports = class Request {
         headers: self.headers,
         json: true
       }, function(err, res, body){
-        if (err || (res.statusCode >= 400 && res.statusCode < 500)) return reject(err ? err : body); // server response err in body
+        if (err || (res.statusCode >= 400 && res.statusCode < 500)) return reject(err ? err : body);
         else if (res.statusCode >= 200 && res.statusCode < 400) resolve(body);
         else {
           if (self.timer >= 2 * 60 * 1000) {

@@ -34,3 +34,5 @@ code/node_modules
 
 # IDEA config
 .idea
+
+apidoc
