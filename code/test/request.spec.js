@@ -91,35 +91,5 @@ describe('Testing Request class and methods', function() {
       done();
     });
   });
-  
-  it('should throw error after 2min resend request to server with server error POST', function(done){
-    let req = new Request(endpoint + 'server-err', params);
-    let resp;
-    req.then(function(res){
-      resp = res;
-    }, function(rej){
-      resp = rej;
-    });
-    setTimeout(function(){
-      expect(resp).to.be.undefined;
-      done();
-    }, 500);
-    
-  });
-  
-  it('should throw error after 2min resend request to server with server error GET', function(done){
-    params.method = "GET";
-    let req = new Request(endpoint + 'server-err', params);
-    let resp;
-    req.then(function(res){
-      resp = res;
-    }, function(rej){
-      resp = rej;
-    });
-    setTimeout(function(){
-      expect(resp).to.be.undefined;
-      done();
-    }, 500);
-  });
 
 });

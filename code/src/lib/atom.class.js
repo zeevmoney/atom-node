@@ -127,6 +127,11 @@ class IronSourceAtom {
     return new Request(this.endpoint, params);
   }
 
+  health(url) {
+    url = url || this.endpoint;
+    return new Request(url, 'health');
+  }
+
 }
 
 module.exports = IronSourceAtom;

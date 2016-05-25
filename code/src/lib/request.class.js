@@ -9,12 +9,15 @@ const crypto = require('crypto');
 
 module.exports = class Request {
   constructor(endpoint, params) {
-      this.params = params;
-      this.timer = 1000;
-      if (!!this.params.method && this.params.method == "GET") {
-        return this.get(endpoint);
-      }
-    else return this.post(endpoint);
+      if (params === 'health') {
+        return this.health(endpoint);
+      } else {
+        this.params = params;
+        if (!!this.params.method && this.params.method == "GET") {
+          return this.get(endpoint);
+        }
+        else return this.post(endpoint);  
+      }      
   }
 
   post(endpoint) {
@@ -28,18 +31,8 @@ module.exports = class Request {
         json: true,
         body: self.params
       }, function(err, res, body){
-        if (err || (res.statusCode >= 400 && res.statusCode < 500)) return reject(err ? err : body);
-        else if (res.statusCode >= 200 && res.statusCode < 400) resolve(body);
-        else {
-          if (self.timer >= 2 * 60 * 1000) {
-            return reject(err ? err : body);
-          } else {
-            setTimeout(function(){
-              self.timer = self.timer * 2;
-              self.post(endpoint);
-            }, self.timer);
-          }
-        }
+        if (err || res.statusCode >= 400) return reject(err ? err : body);
+        else resolve(body);
       })
     })
   }
@@ -54,18 +47,23 @@ module.exports = class Request {
         headers: self.headers,
         json: true
       }, function(err, res, body){
-        if (err || (res.statusCode >= 400 && res.statusCode < 500)) return reject(err ? err : body);
-        else if (res.statusCode >= 200 && res.statusCode < 400) resolve(body);
-        else {
-          if (self.timer >= 2 * 60 * 1000) {
-            return reject(err ? err : body);
-          } else {
-            setTimeout(function(){
-              self.timer = self.timer * 2;
-              self.get(endpoint);
-            }, self.timer);
-          }
-        }
+        if (err || res.statusCode >= 400 ) return reject(err ? err : body);
+        else resolve(body);
+      })
+    })
+  }
+  
+  health(endpoint) {
+    let self = this;
+    return new Promise(function(resolve, reject) {
+      request({
+        url: endpoint,
+        headers: self.headers,
+        json: true,
+        method: "GET"
+      }, function(err, res, body){
+        if (res.statusCode == 404 || res.statusCode >= 500) return reject (false);
+        resolve (true); 
       })
     })
   }
