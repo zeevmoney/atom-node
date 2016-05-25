@@ -1,6 +1,7 @@
 'use strict';
 
 const Request = require('../src/lib/request.class');
+const ISAtom = require('../src/lib/atom.class');
 const express = require('express');
 const app = express();
 const expect = require('chai').expect;
@@ -77,7 +78,7 @@ describe('Testing Request class and methods', function() {
     let req = new Request(endpoint + 'err', params);
 
     req.catch(function(err) {
-      expect(err).to.be.eql({ error: 'No permission for this table' });
+      expect(err).to.be.eql({error: 'No permission for this table'});
       done();
     });
   });
@@ -87,9 +88,21 @@ describe('Testing Request class and methods', function() {
     let req = new Request(endpoint + 'err', params);
 
     req.catch(function(err) {
-      expect(err).to.be.eql({ error: 'No permission for this table' });
+      expect(err).to.be.eql({error: 'No permission for this table'});
       done();
     });
   });
+  
+  it('should check health method', function() {
+    let atom = new ISAtom();
 
+    atom.health().then(function(res) {
+      expect(res).to.be.eql('Server for this url is up!');
+    });
+
+    
+    atom.health('http://localhost:3000/server-err').then().catch(function(err) {
+      expect(err).to.be.eql('Server for this url is down!');
+    });
+  })
 });

@@ -5,10 +5,10 @@ let atom = new ISAtom({
   auth: ''
 });
 
-atom.putEvent({"table": "errTable", "data": "test"}).then(function(res){
+atom.putEvent({"table": "ibtest", "data": "test"}).then(function(res){
   console.log('PutEvent POST success:', res);
 }).catch(function(err){
-  console.log('PutEvent POST error:', err);
+  console.log('PutEvent POST:', err);
 });
 
 atom.putEvent({"table": "ibtest","data": "asd", "method": "GET"}).then(function(res){

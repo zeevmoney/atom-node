@@ -108,16 +108,4 @@ describe('Atom class test', function() {
     expect(atom.putEvent(param)).to.be.equal('eyJ0YWJsZSI6InRhYmxlIiwiZGF0YSI6ImRhdGEiLCJhcGlWZXJzaW9uIjoiMS4wLjAiLCJhdXRoIjoiYXV0aC1rZXkifQ==');
     expect(atom.putEvents(param2)).to.be.equal('eyJ0YWJsZSI6InRhYmxlIiwiZGF0YSI6WyJkYXRhIl0sImFwaVZlcnNpb24iOiIxLjAuMCIsImF1dGgiOiJhdXRoLWtleSJ9');
   });
-
-  it('should check health method', function() {
-    let atom = new ISAtom();
-
-    atom.health().then(function(res) {
-      expect(res).to.be.eql(true);
-    });
-
-    atom.health('http://localhost:3000/server-err').catch(function(err) {
-      expect(err).to.be.eql(false);
-    });
-  })
 });

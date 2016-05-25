@@ -6,3 +6,4 @@ node_js:
 before_install:
 - npm i
 after_script:
+- npm run cover
