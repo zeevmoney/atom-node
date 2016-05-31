@@ -2,7 +2,7 @@
   "name": "atom-node",
   "version": "1.0.0",
   "description": "IronSource Atom NodeJS SDK",
-  "main": "src/lib/atom.class.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "mocha",
     "cover": "istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"

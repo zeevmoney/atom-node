@@ -49,7 +49,6 @@ let params = {
   stream: "STREAM_NAME", // your target stream name
   data: [{name: "iron", last_name: "Beast"},
          {name: "iron2", last_name: "Beast2"}], // Array with any data and any structure.
-  method: "GET" // optional, default "POST"
 }
 
 atom.putEvents(params); // for send bulk of events
