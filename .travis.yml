@@ -1,9 +1,10 @@
 langulage: node_js
-script:
-- npm test
 node_js:
-- 4.4.4
+- 3.3
+- 4.4
 before_install:
 - cd code && npm i
+script:
+- npm test
 after_success:
 - npm run cover
