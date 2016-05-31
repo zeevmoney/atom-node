@@ -6,9 +6,7 @@ const express = require('express');
 const app = express();
 const expect = require('chai').expect;
 const mock = require("./mock/is.mock");
-const btoa = require('btoa');
 const assert = require('assert');
-global.btoa = btoa;
 
 app.post(/endpoint(\?data=.*)?/, function(req, res){
   res.status(200);

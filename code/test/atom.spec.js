@@ -89,23 +89,4 @@ describe('Atom class test', function() {
       expect(e).to.eql(new Error('Stream is required'))
     });
   });
-  //
-  // it('should generate right data for GET request', function() {
-  //   let atom = new mock.ISAtomMock();
-  //
-  //   let param = {
-  //     table: 'table',
-  //     data: 'data',
-  //     method: 'GET'
-  //   };
-  //
-  //   let param2 = {
-  //     table: 'table',
-  //     data: ['data'],
-  //     method: 'GET'
-  //   };
-  //  
-  //   expect(atom.putEvent(param)).to.be.equal('eyJ0YWJsZSI6InRhYmxlIiwiZGF0YSI6ImRhdGEiLCJhcGlWZXJzaW9uIjoiMS4wLjAiLCJhdXRoIjoiYXV0aC1rZXkifQ==');
-  //   expect(atom.putEvents(param2)).to.be.equal('eyJ0YWJsZSI6InRhYmxlIiwiZGF0YSI6WyJkYXRhIl0sImFwaVZlcnNpb24iOiIxLjAuMCIsImF1dGgiOiJhdXRoLWtleSJ9');
-  // });
 });

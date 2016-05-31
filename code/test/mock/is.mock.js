@@ -1,5 +1,4 @@
 'use strict';
-var btoa = require('btoa');
 const Promise = require('bluebird');
 
 function ISAtomMock(opt) {
