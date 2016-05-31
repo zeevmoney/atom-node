@@ -37,9 +37,6 @@ app.get(/err(\?data=.*)?/, function(req, res){
   res.send({"error": "No permission for this table"})
 });
 
-
-
-
 describe('Testing Request class and methods', function() {
   before(function(){
     app.listen(3000);
@@ -62,29 +59,7 @@ describe('Testing Request class and methods', function() {
     });
   });
 
-  it('should send GET request', function(done) {
-    params.method = 'GET';
-    var req = new Request(endpoint + 'endpoint', params);
-
-    req.then(function(res) {
-      expect(res).to.be.eql({
-        status: "OK"
-      });
-      done();
-    });
-  });
-
   it('should handle POST request error', function(done) {
-    let req = new Request(endpoint + 'err', params);
-
-    req.catch(function(err) {
-      expect(err).to.be.eql({error: 'No permission for this table'});
-      done();
-    });
-  });
-
-  it('should handle GET request error', function(done) {
-    params.method = "GET";
     let req = new Request(endpoint + 'err', params);
 
     req.catch(function(err) {
@@ -99,7 +74,6 @@ describe('Testing Request class and methods', function() {
     atom.health().then(function(res) {
       expect(res).to.be.eql('Server for this url is up!');
     });
-
     
     atom.health('http://localhost:3000/server-err').then().catch(function(err) {
       expect(err).to.be.eql('Server for this url is down!');

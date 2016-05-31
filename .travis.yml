@@ -4,6 +4,6 @@ script:
 node_js:
 - 4.4.4
 before_install:
-- npm i
-after_script:
+- cd code && npm i
+after_success:
 - npm run cover

@@ -2,6 +2,7 @@
 [![License][license-image]][license-url]
 [![Docs][docs-image]][docs-url]
 [![Build status][travis-image]][travis-url]
+[![Coveralls][coveralls-image]][coveralls-url]
 
 atom-nodeJs is the official [ironSource.atom](http://www.ironsrc.com/data-flow-management) SDK for the NodeJS programming language.
 
@@ -34,7 +35,6 @@ let atom = new IronSourceAtom(options);
 let params = {
   stream: "STREAM_NAME", //your target stream name
   data: JSON.stringify({name: "iron", last_name: "Source"}), //String with any data and any structure.
-  method: "GET" // optional, default "POST"
 }
 
 atom.putEvent(params).then(function(response){

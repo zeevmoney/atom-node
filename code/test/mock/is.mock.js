@@ -16,23 +16,12 @@ function ISAtomMock(opt) {
     params.apiVersion = this.options.apiVersion;
     params.auth = this.options.auth;
 
-    return (!!params.method && params.method.toUpperCase() === "GET") ?
-      req.get() : req.post();
+    return req.post();
   };
 }
 
 function RequestMockHelper(url, params) {
-  
-  this.get = function() {
-    var data = JSON.stringify({
-      table: params.table,
-      data: params.data,
-      apiVersion: params.apiVersion,
-      auth: params.auth
-    });
 
-    return btoa(data);
-  };
   this.post = function() {
     return params;
   }

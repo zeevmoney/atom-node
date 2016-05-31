@@ -13,10 +13,7 @@ module.exports = class Request {
         return this.health(endpoint);
       } else {
         this.params = params;
-        if (!!this.params.method && this.params.method == "GET") {
-          return this.get(endpoint);
-        }
-        else return this.post(endpoint);  
+        return this.post(endpoint);  
       }      
   }
 
@@ -37,24 +34,10 @@ module.exports = class Request {
       return body;
     });
   }
-
-  get(endpoint) {
-    let self = this;
-    self.params.data = self.params.auth ? crypto.createHmac('sha256', self.params.auth).update(JSON.stringify(self.params.data)).digest('hex') : self.params.data;
-    return request.getAsync({
-        url: endpoint + '?data=' + btoa(JSON.stringify(self.params)),
-        headers: self.headers,
-        json: true
-    }).spread(function(response, body) {
-      if (response.statusCode >= 400) {
-        throw body;
-      }
-      return body;
-    });
-  }
   
   health(endpoint) {
     let self = this;
+    /* istanbul ignore next */
     return request.getAsync({
         url: endpoint,
         headers: self.headers,

@@ -11,11 +11,11 @@ atom.putEvent({"table": "ibtest", "data": "test"}).then(function(res){
   console.log('PutEvent POST:', err);
 });
 
-atom.putEvent({"table": "ibtest","data": "asd", "method": "GET"}).then(function(res){
-  console.log('PutEvent GET success:', res);
-}).catch(function(err){
-  console.log('PutEvent GET error:', err);
-});
+// atom.putEvent({"table": "ibtst","data": "asd", "method": "GET"}).then(function(res){
+//   console.log('PutEvent GET success:', res);
+// }).catch(function(err){
+//   console.log('PutEvent GET error:', err);
+// });
 
 atom.health().then(function(res) {
   console.log("Health: Server on this url is up");
@@ -24,7 +24,7 @@ atom.health().then(function(res) {
 });
 
 atom.putEvents({"table": "ibtest", "data": ["asd"]}).then(function(res){
-  console.log('PutEvents POST success:', res);
+  console.log('PutEvents success:', res);
 }).catch(function(err){
-  console.log('PutEvents POST error:', err);
+  console.log('PutEvents error:', err);
 });
