@@ -13,12 +13,12 @@ atom-nodeJs is the official [ironSource.atom](http://www.ironsrc.com/data-flow-m
 
 #### Installation
 ```sh
-$ npm install --save atom-sdk-node
+$ npm install --save atom-node
 ```
 ##### Add script file
 ```js
 // ...
-const IronSourceAtom = require('atom-sdk-node');
+const IronSourceAtom = require('atom-node');
 ```
 
 #### Using the API layer to send events

@@ -1,4 +1,5 @@
 'use strict';
+// for npm -> require('atom-node');
 
 const ISAtom = require('../src');
 let atom = new ISAtom({
@@ -10,12 +11,6 @@ atom.putEvent({"table": "ibtest", "data": "test"}).then(function(res){
 }).catch(function(err){
   console.log('PutEvent POST:', err);
 });
-
-// atom.putEvent({"table": "ibtst","data": "asd", "method": "GET"}).then(function(res){
-//   console.log('PutEvent GET success:', res);
-// }).catch(function(err){
-//   console.log('PutEvent GET error:', err);
-// });
 
 atom.health().then(function(res) {
   console.log("Health: Server on this url is up");
