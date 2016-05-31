@@ -4,7 +4,6 @@ const config = require('./../config');
 
 const Promise = require('bluebird');
 const request = Promise.promisifyAll(require('request'), {multiArgs: true});
-const btoa = require('btoa');
 const crypto = require('crypto');
 
 module.exports = class Request {
