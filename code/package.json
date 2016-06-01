@@ -1,0 +1,33 @@
+{
+  "name": "atom-node",
+  "version": "1.0.0",
+  "description": "IronSource Atom NodeJS SDK",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "mocha",
+    "cover": "istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IronSource/atom-node.git"
+  },
+  "author": "evhen.popenko@ironsrc.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/IronSource/atom-node/issues"
+  },
+  "homepage": "https://github.com/IronSource/atom-node#readme",
+  "dependencies": {
+    "bluebird": "^3.4.0",
+    "request": "^2.72.0"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "coveralls": "^2.11.9",
+    "express": "^4.13.4",
+    "istanbul": "^0.4.3",
+    "mocha": "^2.5.1",
+    "mocha-lcov-reporter": "^1.2.0",
+    "supertest": "^1.2.0"
+  }
+}
