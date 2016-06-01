@@ -1,3 +1,6 @@
 'use strict';
 
-module.exports = require('./lib/atom.class');
+module.exports = {
+  ISAtom: require('./lib/atom.class'),
+  Tracker: require('./lib/tracker.class')
+};

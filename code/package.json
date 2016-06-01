@@ -19,6 +19,7 @@
   "homepage": "https://github.com/IronSource/atom-node#readme",
   "dependencies": {
     "bluebird": "^3.4.0",
+    "object-sizeof": "^1.0.10",
     "request": "^2.72.0"
   },
   "devDependencies": {

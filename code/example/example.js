@@ -1,10 +1,19 @@
 'use strict';
 // for npm -> require('atom-node');
 
-const ISAtom = require('../src');
+const ISAtom = require('../src').ISAtom;
+const Tracker = require('../src').Tracker;
+
 let atom = new ISAtom({
   auth: ''
 });
+
+let t = new Tracker();
+t.track('ibtes', 'some data');
+
+setTimeout(function(){
+  t.track('ib', 'somes data');
+},12000);
 
 atom.putEvent({"table": "ibtest", "data": "test"}).then(function(res){
   console.log('PutEvent POST success:', res);

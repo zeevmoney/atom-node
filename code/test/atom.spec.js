@@ -1,6 +1,6 @@
 'use strict';
 
-var ISAtom = require('../src');
+var ISAtom = require('../src').ISAtom;
 var expect = require('chai').expect;
 var mock = require("./mock/is.mock");
 

@@ -61,7 +61,10 @@ describe('Testing Request class and methods', function() {
     let req = new Request(endpoint + 'err', params);
 
     req.catch(function(err) {
-      expect(err).to.be.eql({error: 'No permission for this table'});
+      expect(err).to.be.eql({
+        message: {error:'No permission for this table'},
+        status: 401
+      });
       done();
     });
   });
