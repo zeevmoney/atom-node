@@ -9,11 +9,11 @@ let atom = new ISAtom({
 });
 
 let t = new Tracker();
-t.track('ibtes', 'some data');
+t.track('ibtest', 'some data');
 
 setTimeout(function(){
-  t.track('ib', 'somes data');
-},12000);
+  t.track('ibtes', 'somes data');
+},11000);
 
 atom.putEvent({"table": "ibtest", "data": "test"}).then(function(res){
   console.log('PutEvent POST success:', res);

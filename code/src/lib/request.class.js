@@ -42,7 +42,6 @@ module.exports = class Request {
         headers: self.headers,
         json: true
     }).spread(function(response, body) {
-      console.log(body);
       if (response.statusCode == 404 || response.statusCode >= 500) {
         throw 'Server for this url is down!';
       }
