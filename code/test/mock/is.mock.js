@@ -1,11 +1,12 @@
 'use strict';
 const Promise = require('bluebird');
+const config = require('../../src/config');
 
 function ISAtomMock(opt) {
   opt = opt || {};
   this.options = {
     endpoint: "/some-url",
-    apiVersion: "1.0.0",
+    apiVersion: config.API_VERSION,
     auth: "auth-key"
   };
 

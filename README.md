@@ -22,9 +22,27 @@ const IronSourceAtom = require('atom-node');
 ```
 
 #### Using the API layer to send events
-
-Here's an example of sending an event:
+Here's an example of sending an event high lvl api:
 ```js
+const params = {
+  endpoint: "https://track.atom-data.io/",
+  auth: "YOUR_API_KEY",
+  flushInterval: 10000, // Time for send events to server iteraction
+  bulkLen: 10000, // Max count for events for send
+  bulkSize: 1024*1024 // Max size of data for send in byte
+}
+
+let tracker = new Tracker(params);
+
+tracker.track({table: "STREAM NAME", data: 'some data'});
+
+// for send event immediately use
+tracker.flush();
+```
+
+Here's an example of sending an event low lvl api:
+```js
+
 const options = {
   endpoint: "https://track.atom-data.io/",
   auth: "YOUR_API_KEY"
@@ -33,7 +51,7 @@ const options = {
 let atom = new IronSourceAtom(options);
 
 let params = {
-  stream: "STREAM_NAME", //your target stream name
+  table: "STREAM_NAME", //your target stream name
   data: JSON.stringify({name: "iron", last_name: "Source"}), //String with any data and any structure.
 }
 
@@ -46,7 +64,7 @@ atom.putEvent(params).then(function(response){
 // or
 
 let params = {
-  stream: "STREAM_NAME", // your target stream name
+  table: "STREAM_NAME", // your target stream name
   data: [{name: "iron", last_name: "Beast"},
          {name: "iron2", last_name: "Beast2"}], // Array with any data and any structure.
 }

@@ -5,9 +5,7 @@ const Tracker = Promise.promisifyAll(require('../src/lib/tracker.class'));
 const ISAtom = require('../src/lib/atom.class');
 const chai = require('chai');
 const expect = require('chai').expect;
-const spies = require('chai-spies');
-chai.use(spies);
-
+const sinon = require('sinon');
 
 describe('Testing tracker class and methods', function() {
   it('should check correct data on tracker constructor', function() {
@@ -18,6 +16,21 @@ describe('Testing tracker class and methods', function() {
       bulkLen: 10000,
       bulkSize: 1024*1024
     });
+    
+    let params = {
+      flushInterval: 1000,
+      bulkLen: 100,
+      bulkSize: 1024
+    };
+    
+    let p = new Tracker(params);
+    expect(p.params).to.be.eql(
+      {
+        flushInterval: 1000,
+        bulkLen: 100,
+        bulkSize: 1024
+      }
+    )
   });
 
   it('should accumulate data in one arr before flush', function() {
@@ -36,4 +49,22 @@ describe('Testing tracker class and methods', function() {
     });
   });
   
+  it('should check run flush after timeout len size',function() {
+    let params = {
+      flushInterval: 3000,
+      bulkLen: 2,
+      bulkSize: 100
+    };
+    
+    let clock = sinon.useFakeTimers();
+    let t = new Tracker(params);
+    
+    t.track('stream', 'data');
+    
+    let flush =  sinon.spy(t, 'flush');
+    clock.tick(4100);
+    flush.restore();
+    clock.restore();
+    sinon.assert.calledTwice(flush);
+  });
 });

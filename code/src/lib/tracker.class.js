@@ -19,7 +19,46 @@ module.exports = class Tracker {
 
     this.timer = null;
   }
-
+  /**
+   *
+   * Start track events
+   *
+   * @api {post} endpoint/bulk track Accumulate and send events to server
+   * @apiVersion 1.1.0
+   * @apiGroup Atom
+   * @apiParam {String} stream Stream name for saving data in db table
+   * @apiParam {All} data Event data for saving
+   *
+   * @apiSuccess {Null} err Server response error
+   * @apiSuccess {Object} data Server response data
+   * @apiSuccess {String} status Server response status
+   *
+   * @apiError {Object} err Server response error
+   * @apiError {Null} data Server response data
+   * @apiError {String} status Server response status
+   *
+   * @apiErrorExample Error-Response:
+   *  HTTP 401 Permission Denied
+   *  {
+   *    "err": {"Target Stream": "Permission denied",
+   *    "data": null,
+   *    "status": 401
+   *  }
+   *
+   * @apiSuccessExample Response:
+   * HTTP 200 OK
+   * {
+   *    "err": null,
+   *    "data": "success"
+   *    "status": 200
+   * }
+   * @apiParamExample {json} Request-Example:
+   * {
+   *    "stream": "streamName",
+   *    "data": "Some data"
+   * }
+   *
+   */
   track(stream, data) {
     let self = this;
     if(stream == undefined || data == undefined || !data.length) {
@@ -40,7 +79,7 @@ module.exports = class Tracker {
     }
 
   }
-  /* istanbul ignore next */
+  
   flush(batchStream, batchData, timeout) {
     let self = this;
     timeout = timeout || 1000;
