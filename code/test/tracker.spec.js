@@ -18,7 +18,7 @@ describe('Testing tracker class and methods', function() {
     });
     
     let params = {
-      flushInterval: 1000,
+      flushInterval: 1,
       bulkLen: 100,
       bulkSize: 1024
     };
@@ -51,7 +51,7 @@ describe('Testing tracker class and methods', function() {
   
   it('should check run flush after timeout len size',function() {
     let params = {
-      flushInterval: 3000,
+      flushInterval: 3,
       bulkLen: 2,
       bulkSize: 100
     };

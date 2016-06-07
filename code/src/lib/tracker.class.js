@@ -10,7 +10,7 @@ module.exports = class Tracker {
   constructor(params) {
     params = params || {};
     this.params = params;
-    this.params.flushInterval = !!params.flushInterval ? params.flushInterval : 10000;
+    this.params.flushInterval = !!params.flushInterval ? params.flushInterval * 1000 : 10000;
     this.params.bulkLen = !!params.bulkLen ? params.bulkLen : 10000;
     this.params.bulkSize = !!params.bulkSize ? params.bulkSize:  1024 * 1024;
     

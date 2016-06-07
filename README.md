@@ -27,7 +27,7 @@ Here's an example of sending an event high lvl api:
 const params = {
   endpoint: "https://track.atom-data.io/",
   auth: "YOUR_API_KEY",
-  flushInterval: 10000, // Time for send events to server iteraction
+  flushInterval: 10, // Time for send events to interval in sec
   bulkLen: 10000, // Max count for events for send
   bulkSize: 1024*1024 // Max size of data for send in byte
 }

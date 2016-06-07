@@ -7,8 +7,12 @@ const Tracker = require('../src').Tracker;
 let atom = new ISAtom({
   auth: ''
 });
-
-let t = new Tracker();
+let trackerParams = {
+  flushInterval: 10, // time for send interval in sec
+  bulkLen: 10000, // max count of events to send
+  bulkSize: 1024*1024 // max accumulated data size to send
+};
+let t = new Tracker(trackerParams);
 t.track('ibtest', 'some data');
 
 setTimeout(function(){
