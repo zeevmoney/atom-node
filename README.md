@@ -29,7 +29,7 @@ const params = {
   auth: "YOUR_API_KEY",
   flushInterval: 10, // Time for send events to interval in sec
   bulkLen: 10000, // Max count for events for send
-  bulkSize: 1024*1024 // Max size of data for send in byte
+  bulkSize: 64 // Max size of data for send in Kb
 }
 
 let tracker = new Tracker(params);

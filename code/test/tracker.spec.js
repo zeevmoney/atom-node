@@ -14,13 +14,13 @@ describe('Testing tracker class and methods', function() {
     expect(t.params).to.be.eql({
       flushInterval: 10000,
       bulkLen: 10000,
-      bulkSize: 1024*1024
+      bulkSize: 64 * 1024
     });
     
     let params = {
       flushInterval: 1,
       bulkLen: 100,
-      bulkSize: 1024
+      bulkSize: 1
     };
     
     let p = new Tracker(params);

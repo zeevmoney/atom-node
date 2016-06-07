@@ -12,7 +12,7 @@ module.exports = class Tracker {
     this.params = params;
     this.params.flushInterval = !!params.flushInterval ? params.flushInterval * 1000 : 10000;
     this.params.bulkLen = !!params.bulkLen ? params.bulkLen : 10000;
-    this.params.bulkSize = !!params.bulkSize ? params.bulkSize:  1024 * 1024;
+    this.params.bulkSize = !!params.bulkSize ? params.bulkSize * 1024 :  64 * 1024; // change to Kb
     
     this.accumulated = {};
     this.atom = new ISAtom(params);

@@ -10,7 +10,7 @@ let atom = new ISAtom({
 let trackerParams = {
   flushInterval: 10, // time for send interval in sec
   bulkLen: 10000, // max count of events to send
-  bulkSize: 1024*1024 // max accumulated data size to send
+  bulkSize: 128 // max accumulated data size to send in Kb
 };
 let t = new Tracker(trackerParams);
 t.track('ibtest', 'some data');
