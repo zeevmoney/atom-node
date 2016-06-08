@@ -1,10 +1,23 @@
 'use strict';
 // for npm -> require('atom-node');
 
-const ISAtom = require('../src');
+const ISAtom = require('../src').ISAtom;
+const Tracker = require('../src').Tracker;
+
 let atom = new ISAtom({
   auth: ''
 });
+let trackerParams = {
+  flushInterval: 10, // time for send interval in sec
+  bulkLen: 10000, // max count of events to send
+  bulkSize: 128 // max accumulated data size to send in Kb
+};
+let t = new Tracker(trackerParams);
+t.track('ibtest', 'some data');
+
+setTimeout(function(){
+  t.track('ibtes', 'somes data');
+},11000);
 
 atom.putEvent({"table": "ibtest", "data": "test"}).then(function(res){
   console.log('PutEvent POST success:', res);

@@ -1,8 +1,9 @@
 'use strict';
 
-var ISAtom = require('../src');
-var expect = require('chai').expect;
-var mock = require("./mock/is.mock");
+const ISAtom = require('../src').ISAtom;
+const expect = require('chai').expect;
+const mock = require("./mock/is.mock");
+const config = require('../src/config');
 
 describe('Atom class test', function() {
 
@@ -11,12 +12,12 @@ describe('Atom class test', function() {
 
     expect(atom).to.eql({
       endpoint: "https://track.atom-data.io/",
-      apiVersion: "1.0.0",
+      apiVersion: config.API_VERSION,
       auth: "",
       headers: {
         "contentType": "application/json;charset=UTF-8",
         "x-ironsource-atom-sdk-type": "nodejs",
-        "x-ironsource-atom-sdk-version": "1.0.0"
+        "x-ironsource-atom-sdk-version": config.API_VERSION
       }
     })
   });
@@ -41,7 +42,7 @@ describe('Atom class test', function() {
     };
 
     expect(atom.putEvent(param)).to.be.eql({
-      apiVersion: "1.0.0",
+      apiVersion: config.API_VERSION,
       auth: "auth-key",
       table: "table",
       data: "data"

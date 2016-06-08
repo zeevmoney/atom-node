@@ -28,7 +28,7 @@ module.exports = class Request {
         body: self.params
     }).spread(function(response, body) {
       if (response.statusCode >= 400) {
-        throw body;
+        throw {message: body, status: response.statusCode};
       }
       return body;
     });
@@ -38,7 +38,7 @@ module.exports = class Request {
     let self = this;
     /* istanbul ignore next */
     return request.getAsync({
-        url: endpoint,
+        url: endpoint + '/health',
         headers: self.headers,
         json: true
     }).spread(function(response, body) {

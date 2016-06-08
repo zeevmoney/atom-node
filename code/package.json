@@ -1,6 +1,6 @@
 {
   "name": "atom-node",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "IronSource Atom NodeJS SDK",
   "main": "src/index.js",
   "scripts": {
@@ -19,6 +19,7 @@
   "homepage": "https://github.com/IronSource/atom-node#readme",
   "dependencies": {
     "bluebird": "^3.4.0",
+    "object-sizeof": "^1.0.10",
     "request": "^2.72.0"
   },
   "devDependencies": {
@@ -28,6 +29,6 @@
     "istanbul": "^0.4.3",
     "mocha": "^2.5.1",
     "mocha-lcov-reporter": "^1.2.0",
-    "supertest": "^1.2.0"
+    "sinon": "^1.17.4"
   }
 }

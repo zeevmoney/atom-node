@@ -20,7 +20,7 @@ class IronSourceAtom {
    *
    * Put a single event to an Atom Stream.
    * @api {post} https://track.atom-data.io/ putEvent Send single data to Atom server
-   * @apiVersion 1.0.0
+   * @apiVersion 1.1.0
    * @apiGroup Atom
    * @apiParam {String} stream Stream name for saving data in db table
    * @apiParam {String} data Data for saving
@@ -75,7 +75,7 @@ class IronSourceAtom {
  * Put a bulk of events to Atom.
  *
  * @api {post} https://track.atom-data.io/bulk putEvents Send multiple events data to Atom server
- * @apiVersion 1.0.0
+ * @apiVersion 1.1.0
  * @apiGroup Atom
  * @apiParam {String} stream Stream name for saving data in db table
  * @apiParam {Array} data Multiple event data for saving
@@ -128,8 +128,8 @@ class IronSourceAtom {
    *
    * Check server health.
    *
-   * @api {get} https://track.atom-data.io health Send check request to Atom server
-   * @apiVersion 1.0.0
+   * @api {get} https://track.atom-data.io/health health Send check request to Atom server
+   * @apiVersion 1.1.0
    * @apiGroup Atom
    * @apiParam {String} url Endpoint server url for check
    *
