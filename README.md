@@ -79,7 +79,7 @@ You can use our [example][example-url] for sending data to Atom:
 ### License
 MIT
 
-[example-url]: https://github.com/ironSource/atom-node/blob/master/atom-node/code/example/example.js
+[example-url]: https://github.com/ironSource/atom-node/blob/master/code/example/example.js
 [license-image]: https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square
 [license-url]: LICENSE
 [travis-image]: https://travis-ci.org/ironSource/atom-node.svg?branch=master
