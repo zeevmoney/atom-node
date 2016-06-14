@@ -1,38 +1,120 @@
 'use strict';
-// for npm -> require('atom-node');
+
+// for npm do -> require('atom-node');
 
 const ISAtom = require('../src').ISAtom;
-const Tracker = require('../src').Tracker;
+const co = require('co');
+const program = require('commander');
 
 let atom = new ISAtom({
-  auth: ''
-});
-let trackerParams = {
-  flushInterval: 10, // time for send interval in sec
-  bulkLen: 10000, // max count of events to send
-  bulkSize: 128 // max accumulated data size to send in Kb
-};
-let t = new Tracker(trackerParams);
-t.track('ibtest', 'some data');
-
-setTimeout(function(){
-  t.track('ibtes', 'somes data');
-},11000);
-
-atom.putEvent({"table": "ibtest", "data": "test"}).then(function(res){
-  console.log('PutEvent POST success:', res);
-}).catch(function(err){
-  console.log('PutEvent POST:', err);
+  auth: "I40iwPPOsG3dfWX30labriCg9HqMfL"
 });
 
-atom.health().then(function(res) {
-  console.log("Health: Server on this url is up");
-}, function(rej) {
-  console.log("Health: Server on this url is down");
-});
+program
+  .version('1.0.0')
+  .option('-p, --putevent', 'Run the putEvent examples')
+  .option('-P, --putevents', 'Run the putEvents examples')
+  .option('-H, --health', 'run the health check example', {isDefault: true})
+  .option('-a, --all', 'Run all of the examples')
+  .parse(process.argv);
 
-atom.putEvents({"table": "ibtest", "data": ["asd"]}).then(function(res){
-  console.log('PutEvents success:', res);
-}).catch(function(err){
-  console.log('PutEvents error:', err);
-});
+if (program.putevent) putEventExamples();
+if (program.putevents) putEventsExample();
+if (program.health) healthExample();
+if (program.all) runAllExamples();
+if (!process.argv.slice(2).length) {
+  program.outputHelp();
+}
+
+function runAllExamples() {
+  putEventExamples();
+  putEventsExample();
+  healthExample();
+}
+
+
+function putEventExamples() {
+
+  let data = {
+    stream: "sdkdev_sdkdev.public.zeev",
+    data: JSON.stringify({
+      strings: "hi",
+      ints: 123,
+      floats: 24.5,
+      ts: new Date()
+    })
+  };
+
+  // With co:
+  co(function* () {
+    return yield atom.putEvent(data);
+  }).then(function (res) {
+    console.log('PutEvent POST success:', res);
+  }, function (err) {
+    console.log('PutEvent POST failure:', err);
+  });
+
+
+  // With co & GET method:
+  data.method = 'GET';
+  co(function* () {
+    return yield atom.putEvent(data);
+  }).then(function (res) {
+    console.log('PutEvent GET success:', res);
+  }, function (err) {
+    console.log('PutEvent GET failure:', err);
+  });
+
+
+  // With promises & bad auth
+  atom.auth = 'bad_auth';
+  atom.putEvent(data).then(function (res) {
+    console.log('PutEvent POST success:', res);
+  }).catch(function (err) {
+    console.log('PutEvent POST failure:', err);
+  });
+
+  // With bad endpoint
+  atom.endpoint = 'http://127.0.0.1';
+  atom.putEvent(data).then(function (res) {
+    console.log('PutEvent POST success:', res);
+  }).catch(function (err) {
+    console.log('PutEvent POST failure:', err);
+  });
+
+}
+
+function healthExample() {
+  atom.health().then(function (res) {
+    console.log('Health check success:', res);
+  }, function (err) {
+    console.log('Health check failure:', err);
+  });
+}
+
+function putEventsExample() {
+  let bulk = {
+    stream: "sdkdev_sdkdev.public.zeev",
+    data: []
+  };
+
+  for (let i = 0; i < 10; i++) {
+    let number = Math.random() * (3000 - 3) + 3;
+    let data = {
+      strings: String(number),
+      ints: Math.round(number),
+      floats: number,
+      ts: new Date(),
+      batch: true
+    };
+    bulk.data.push(data);
+  }
+
+  console.log(`Sending ${bulk.data.length} events to Atom`);
+
+  atom.putEvents(bulk).then(function (res) {
+    console.log('PutEvents success:', res);
+  }).catch(function (err) {
+    console.log('PutEvents error:', err);
+  });
+}
