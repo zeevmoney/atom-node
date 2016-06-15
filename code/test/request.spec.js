@@ -51,7 +51,8 @@ describe('Testing Request class and methods', function() {
 
     req.then(function(res) {
       expect(res).to.be.eql({
-        status: "OK"
+        message: {status: "OK"},
+        status: 200
       });
       done();
     });
