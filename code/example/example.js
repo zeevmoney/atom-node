@@ -7,7 +7,7 @@ const co = require('co');
 const program = require('commander');
 
 let atom = new ISAtom({
-  auth: "I40iwPPOsG3dfWX30labriCg9HqMfL"
+  auth: ""
 });
 
 program
@@ -36,7 +36,7 @@ function runAllExamples() {
 function putEventExamples() {
 
   let data = {
-    stream: "sdkdev_sdkdev.public.zeev",
+    stream: "test",
     data: JSON.stringify({
       strings: "hi",
       ints: 123,
