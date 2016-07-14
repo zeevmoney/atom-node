@@ -13,11 +13,23 @@ module.exports = class Tracker {
     this.params.flushInterval = !!params.flushInterval ? params.flushInterval * 1000 : 10000;
     this.params.bulkLen = !!params.bulkLen ? params.bulkLen : 10000;
     this.params.bulkSize = !!params.bulkSize ? params.bulkSize * 1024 :  64 * 1024; // change to Kb
-    
+
+    this.logger = params.logger || logger;
+
     this.accumulated = {};
     this.atom = new ISAtom(params);
 
     this.timer = null;
+  }
+
+  /**
+   *
+   * @param streamData
+   * @returns {boolean}
+   * @private
+   */
+  _shouldFlush(streamData) {
+    return streamData.length >= this.params.bulkLen || sizeof(streamData) >= this.params.bulkSize
   }
   /**
    *
@@ -60,66 +72,82 @@ module.exports = class Tracker {
    *
    */
   track(stream, data) {
-    let self = this;
-    if(stream == undefined || data == undefined || !data.length) {
-      return logger.err('Stream or data empty');
+    if (stream == undefined || data == undefined) {
+      return this.logger.error('Stream or data empty');
     }
 
-    if (!self.accumulated[stream]) self.accumulated[stream] = [];
-    self.accumulated[stream].push(data);
-
-    if (self.accumulated[stream].length >= self.params.bulkLen || sizeof(self.accumulated[stream]) >= self.params.bulkSize) {
-      self.flush(stream);
+    if (!this.accumulated[stream]) {
+      this.accumulated[stream] = [];
     }
 
-    else if (!self.timer) {
-      self.timer = setTimeout(function() {
-        self.flush();
-      }, self.params.flushInterval);
+    this.accumulated[stream].push(data);
+
+    if (this._shouldFlush(this.accumulated[stream])) {
+      this.flush(stream);
+    }
+
+    else if (!this.timer) {
+      this.timer = setTimeout(() => {
+        this.flush();
+      }, this.params.flushInterval);
     }
 
   }
-  
+
+  /**
+   *
+   * @param batchStream
+   * @param batchData
+   * @param timeout
+   */
   flush(batchStream, batchData, timeout) {
-    let self = this;
     timeout = timeout || 1000;
 
     if (!!batchStream && !!batchData) {
       // for send or retry method
-      send(batchStream, batchData, timeout);
+      this._send(batchStream, batchData, timeout);
     }
 
-    else if (!!batchStream && !batchData) {
+    else if (!!batchStream && !batchsData) {
       // send with custom stream when >= len || size
-      if (self.accumulated[batchStream].length >= 1) send(batchStream, self.accumulated[batchStream]);
+      if (this.accumulated[batchStream].length >= 1) this._send(batchStream, this.accumulated[batchStream]);
     }
 
     else {
       //send all when no params
-      for(let key in self.accumulated) {
-        if (self.accumulated[key].length >= 1) self.flush(key, self.accumulated[key]);
-        self.accumulated[key] = [];
+      for (let key in this.accumulated) {
+        if (this.accumulated[key].length >= 1) this.flush(key, this.accumulated[key]);
+        this.accumulated[key] = [];
       }
-      self.timer = null;
+      this.timer = null;
     }
-    /* istanbul ignore next */
-    function send (stream, data, timeout) {
-      return self.atom.putEvents({"table": stream, "data": data})
-        .catch(function(err) {
+  }
+
+  /* istanbul ignore next */
+  /**
+   *
+   * @param stream
+   * @param data
+   * @param timeout
+   * @returns {Promise.<T>}
+   * @private
+   */
+  _send(stream, data, timeout) {
+    return this.atom.putEvents({"table": stream, "data": data})
+        .catch(function (err) {
           if (err.status >= 500) {
             if (timeout < 10 * 60 * 1000) {
-              setTimeout(function() {
+              setTimeout(()=> {
                 timeout = timeout * 2;
-                self.flush(stream, data, timeout);
+                this.flush(stream, data, timeout);
               }, timeout);
             } else {
               //some handler for err after 10min retry fail
-              return logger.err('Server not response more then 10min.');
+              return this.logger.error('Server not response more then 10min.');
             }
           } else {
-            return logger.err(err);
+            return this.logger.error(err);
           }
         });
-    }
   }
 };

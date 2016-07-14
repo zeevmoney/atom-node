@@ -10,29 +10,29 @@ const assert = require('assert');
 
 app.post(/endpoint(\?data=.*)?/, function(req, res){
   res.status(200);
-  res.send({"status": "OK"})
+  res._send({"status": "OK"})
 });
 app.get(/endpoint(\?data=.*)?/, function(req, res){
   res.status(200);
-  res.send({"status": "OK"})
+  res._send({"status": "OK"})
 });
 
 app.post(/server-err(\?data=.*)?/, function(req, res){
   res.status(500);
-  res.send({"error": "Server error"})
+  res._send({"error": "Server error"})
 });
 app.get(/server-err(\?data=.*)?/, function(req, res){
   res.status(500);
-  res.send({"error": "Server error"})
+  res._send({"error": "Server error"})
 });
 
 app.post(/err(\?data=.*)?/, function(req, res){
   res.status(401);
-  res.send({"error": "No permission for this table"})
+  res._send({"error": "No permission for this table"})
 });
 app.get(/err(\?data=.*)?/, function(req, res){
   res.status(401);
-  res.send({"error": "No permission for this table"})
+  res._send({"error": "No permission for this table"})
 });
 
 describe('Testing Request class and methods', function() {
@@ -69,14 +69,14 @@ describe('Testing Request class and methods', function() {
       done();
     });
   });
-  
+
   it('should check health method', function() {
     let atom = new ISAtom();
 
     atom.health().then(function(res) {
       expect(res).to.be.eql('Server for this url is up!');
     });
-    
+
     atom.health('http://localhost:3000/server-err').then().catch(function(err) {
       expect(err).to.be.eql('Server for this url is down!');
     });
