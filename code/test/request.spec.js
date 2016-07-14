@@ -10,29 +10,29 @@ const assert = require('assert');
 
 app.post(/endpoint(\?data=.*)?/, function(req, res){
   res.status(200);
-  res._send({"status": "OK"})
+  res.send({"status": "OK"})
 });
 app.get(/endpoint(\?data=.*)?/, function(req, res){
   res.status(200);
-  res._send({"status": "OK"})
+  res.send({"status": "OK"})
 });
 
 app.post(/server-err(\?data=.*)?/, function(req, res){
   res.status(500);
-  res._send({"error": "Server error"})
+  res.send({"error": "Server error"})
 });
 app.get(/server-err(\?data=.*)?/, function(req, res){
   res.status(500);
-  res._send({"error": "Server error"})
+  res.send({"error": "Server error"})
 });
 
 app.post(/err(\?data=.*)?/, function(req, res){
   res.status(401);
-  res._send({"error": "No permission for this table"})
+  res.send({"error": "No permission for this table"})
 });
 app.get(/err(\?data=.*)?/, function(req, res){
   res.status(401);
-  res._send({"error": "No permission for this table"})
+  res.send({"error": "No permission for this table"})
 });
 
 describe('Testing Request class and methods', function() {
