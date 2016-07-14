@@ -108,7 +108,7 @@ module.exports = class Tracker {
       this._send(batchStream, batchData, timeout);
     }
 
-    else if (!!batchStream && !batchsData) {
+    else if (!!batchStream && !batchData) {
       // send with custom stream when >= len || size
       if (this.accumulated[batchStream].length >= 1) this._send(batchStream, this.accumulated[batchStream]);
     }
