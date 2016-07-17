@@ -29,7 +29,7 @@ module.exports = class Request {
                 if (err) {
                     return reject(err);
                 } else {
-                    return resolve(body);
+                    return resolve([res, body]);
                 }
             });
         });

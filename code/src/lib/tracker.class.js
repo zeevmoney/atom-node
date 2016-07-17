@@ -73,13 +73,12 @@ module.exports = class Tracker {
    */
   track(stream, data) {
     if (stream == undefined || data == undefined) {
-      return this.logger.error('Stream or data empty');
+      logger.error('Stream or data empty');
     }
 
     if (!this.accumulated[stream]) {
       this.accumulated[stream] = [];
     }
-
     this.accumulated[stream].push(data);
 
     if (this._shouldFlush(this.accumulated[stream])) {
@@ -88,7 +87,7 @@ module.exports = class Tracker {
 
     else if (!this.timer) {
       this.timer = setTimeout(() => {
-        this.flush();
+        this.flush(stream);
       }, this.params.flushInterval);
     }
 
@@ -101,28 +100,32 @@ module.exports = class Tracker {
    * @param timeout
    */
   flush(batchStream, batchData, timeout) {
-    timeout = timeout || 1000;
 
+    timeout = timeout || 1000;
     if (!!batchStream && !!batchData) {
       // for send or retry method
       this._send(batchStream, batchData, timeout);
     }
 
     else if (!!batchStream && !batchData) {
+      let data = this.accumulated[batchStream];
       // send with custom stream when >= len || size
-      if (this.accumulated[batchStream].length >= 1) this._send(batchStream, this.accumulated[batchStream]);
+      if (data.length >= 1) {
+        this._send(batchStream, data.splice(0));
+      }
     }
 
     else {
       //send all when no params
       for (let key in this.accumulated) {
-        if (this.accumulated[key].length >= 1) this.flush(key, this.accumulated[key]);
-        this.accumulated[key] = [];
+        let data = this.accumulated[key];
+        if (data.length >= 1) {
+          this.flush(key, data.splice(0));
+        }
       }
       this.timer = null;
     }
   }
-
   /* istanbul ignore next */
   /**
    *
@@ -133,8 +136,8 @@ module.exports = class Tracker {
    * @private
    */
   _send(stream, data, timeout) {
-    return this.atom.putEvents({"table": stream, "data": data})
-        .catch(function (err) {
+    return this.atom.putEvents({"stream": stream, "data": data})
+        .catch((err) => {
           if (err.status >= 500) {
             if (timeout < 10 * 60 * 1000) {
               setTimeout(()=> {
