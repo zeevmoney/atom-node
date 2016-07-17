@@ -9,6 +9,16 @@ const sizeof = require('object-sizeof');
 const LocalStore = require('./stores/local.class');
 
 module.exports = class Tracker {
+  /**
+   *
+   * @param params
+   * flushInterval optional(default 1 second) - interval in seconds in which the event's should be flushed
+   * bulkLen optional(default 10000) - max length of each key in store
+   * bulkSize optional(default 64kb) - max size in kb for each key in store
+   * flushOnExit (default false) - whether all data should be flushed on application exit
+   * logger optional(default console) - logger module
+   * store (default localStore) - store module, implementation for the storage of keys and values
+   */
   constructor(params) {
     params = params || {};
     this.params = params;
