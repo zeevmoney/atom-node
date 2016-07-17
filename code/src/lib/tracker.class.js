@@ -16,14 +16,31 @@ module.exports = class Tracker {
     this.params.bulkLen = !!params.bulkLen ? params.bulkLen : 10000;
     this.params.bulkSize = !!params.bulkSize ? params.bulkSize * 1024 :  64 * 1024; // change to Kb
     this.logger = params.logger || logger;
-
     this.store = params.store || new LocalStore();
 
     this.atom = new ISAtom(params);
 
     this.timer = null;
+
+    if (this.params.flushOnExit) {
+      this.exitHandled = false;
+      process.on('exit', ()=>this._exitHandler());
+      process.on('SIGINT', ()=>this._exitHandler());
+      process.on('SIGHUP', ()=>this._exitHandler());
+      process.on('SIGQUIT', ()=>this._exitHandler());
+      process.on('SIGABRT', ()=>this._exitHandler());
+      process.on('SIGTERM', ()=>this._exitHandler());
+    }
   }
 
+  _exitHandler() {
+    // prevent multiple exit handlers to be called
+    if (!this.exitHandled) {
+      this.exitHandled = true;
+      logger.trace('triggered flush due to process exit');
+      this.flush();
+    }
+  }
   /**
    *
    * @param streamData
@@ -79,10 +96,7 @@ module.exports = class Tracker {
     }
 
     this.store.add(stream, data);
-    let storeData = this.store.get(stream);
-
-    if (this._shouldFlush(storeData)) {
-      logger.trace(`flushing ${stream} with ${storeData.length} items`);
+    if (this._shouldFlush(this.store.get(stream))) {
       this.flush(stream);
     }
     else if (!this.timer) {
@@ -105,21 +119,23 @@ module.exports = class Tracker {
     timeout = timeout || 1000;
     if (!!batchStream && !!batchData) {
       // for send or retry method
+      logger.trace(`flushing ${batchStream} with ${batchData.length} items`);
       this._send(batchStream, batchData, timeout);
     }
 
     else if (!!batchStream && !batchData) {
       // send with custom stream when >= len || size
       if (!this.store.isEmpty(batchStream)) {
+        logger.trace(`flushing ${batchStream} with ${this.store.get(batchStream).length} items`);
         this._send(batchStream, this.store.take(batchStream));
       }
     }
 
     else {
       //send all when no params
-      for (let key in this.accumulated) {
-        if (!this.store.isEmpty(batchStream)) {
-          this.flush(key, this.store.take(batchStream));
+      for (let key of this.store.keys) {
+        if (!this.store.isEmpty(key)) {
+          this.flush(key, this.store.take(key));
         }
       }
       this.timer = null;

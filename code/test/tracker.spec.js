@@ -94,4 +94,19 @@ describe('Testing tracker class and methods', function () {
 
     expect(tracker.flush).to.have.callCount(10);
   });
+  it('should flush on process exit', function () {
+    let tracker = new Tracker({
+      flushInterval: 20000,
+      bulkLen: 50,
+      flushOnExit: true
+    });
+    let i = 0;
+    while (i < 65) {
+      tracker.track('stream', {id: i, uuid: uuid.v4()});
+      i++;
+    }
+
+    process.emit('SIGINT');
+    expect(tracker.flush).to.have.been.calledThrice;
+  });
 });

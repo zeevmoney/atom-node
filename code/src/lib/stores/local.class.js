@@ -28,4 +28,8 @@ module.exports = class LocalStore {
   take(key) {
     return this.get(key).splice(0);
   }
+
+  get keys() {
+    return Object.keys(this.data);
+  }
 };
