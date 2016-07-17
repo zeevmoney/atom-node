@@ -61,7 +61,7 @@ describe('Testing tracker class and methods', function () {
     try {
       t.track()
     } catch (err) {
-      expect(err).to.be.eql('Stream or data empty');
+      expect(err).to.have.property('message', 'Stream or data empty');
     }
   });
 

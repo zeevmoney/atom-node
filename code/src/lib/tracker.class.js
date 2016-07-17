@@ -75,16 +75,18 @@ module.exports = class Tracker {
    */
   track(stream, data) {
     if (stream == undefined || data == undefined) {
-      logger.error('Stream or data empty');
+      throw new Error('Stream or data empty');
     }
 
     this.store.add(stream, data);
+    let storeData = this.store.get(stream);
 
-    if (this._shouldFlush(this.store.get(stream))) {
+    if (this._shouldFlush(storeData)) {
+      logger.trace(`flushing ${stream} with ${storeData.length} items`);
       this.flush(stream);
     }
-
     else if (!this.timer) {
+      logger.trace(`setting up timer for ${stream} (${this.params.flushInterval}ms interval)`);
       this.timer = setTimeout(() => {
         this.flush(stream);
       }, this.params.flushInterval);

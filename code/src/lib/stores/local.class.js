@@ -13,6 +13,7 @@ module.exports = class LocalStore {
       this.data[key] = [];
     }
     this.data[key].push(value);
+    return this.get(key);
   }
 
   get(key) {
