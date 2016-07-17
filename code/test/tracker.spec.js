@@ -53,7 +53,7 @@ describe('Testing tracker class and methods', function () {
 
     t.track('stream', 'data1');
     t.track('stream', 'data2');
-    expect(t.accumulated['stream']).to.be.eql(['data1', 'data2']);
+    expect(t.store.get('stream')).to.be.eql(['data1', 'data2']);
   });
 
   it('should throw err when stream empty', function () {

@@ -6,6 +6,8 @@ const ISAtom = require('./atom.class');
 const logger = require('./logger');
 const sizeof = require('object-sizeof');
 
+const LocalStore = require('./stores/local.class');
+
 module.exports = class Tracker {
   constructor(params) {
     params = params || {};
@@ -13,10 +15,10 @@ module.exports = class Tracker {
     this.params.flushInterval = !!params.flushInterval ? params.flushInterval * 1000 : 10000;
     this.params.bulkLen = !!params.bulkLen ? params.bulkLen : 10000;
     this.params.bulkSize = !!params.bulkSize ? params.bulkSize * 1024 :  64 * 1024; // change to Kb
-
     this.logger = params.logger || logger;
 
-    this.accumulated = {};
+    this.store = params.store || new LocalStore();
+
     this.atom = new ISAtom(params);
 
     this.timer = null;
@@ -76,12 +78,9 @@ module.exports = class Tracker {
       logger.error('Stream or data empty');
     }
 
-    if (!this.accumulated[stream]) {
-      this.accumulated[stream] = [];
-    }
-    this.accumulated[stream].push(data);
+    this.store.add(stream, data);
 
-    if (this._shouldFlush(this.accumulated[stream])) {
+    if (this._shouldFlush(this.store.get(stream))) {
       this.flush(stream);
     }
 
@@ -108,19 +107,17 @@ module.exports = class Tracker {
     }
 
     else if (!!batchStream && !batchData) {
-      let data = this.accumulated[batchStream];
       // send with custom stream when >= len || size
-      if (data.length >= 1) {
-        this._send(batchStream, data.splice(0));
+      if (!this.store.isEmpty(batchStream)) {
+        this._send(batchStream, this.store.take(batchStream));
       }
     }
 
     else {
       //send all when no params
       for (let key in this.accumulated) {
-        let data = this.accumulated[key];
-        if (data.length >= 1) {
-          this.flush(key, data.splice(0));
+        if (!this.store.isEmpty(batchStream)) {
+          this.flush(key, this.store.take(batchStream));
         }
       }
       this.timer = null;
