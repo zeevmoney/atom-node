@@ -27,7 +27,6 @@ module.exports = class Tracker {
     this.params.bulkSize = !!params.bulkSize ? params.bulkSize * 1024 :  64 * 1024; // change to Kb
     this.logger = params.logger || logger;
     this.store = params.store || new LocalStore();
-
     this.atom = new ISAtom(params);
 
     this.timer = null;
@@ -47,7 +46,7 @@ module.exports = class Tracker {
     // prevent multiple exit handlers to be called
     if (!this.exitHandled) {
       this.exitHandled = true;
-      logger.trace('triggered flush due to process exit');
+      this.logger.trace('triggered flush due to process exit');
       this.flush();
     }
   }
@@ -110,7 +109,7 @@ module.exports = class Tracker {
       this.flush(stream);
     }
     else if (!this.timer) {
-      logger.trace(`setting up timer for ${stream} (${this.params.flushInterval}ms interval)`);
+      this.logger.trace(`setting up timer for ${stream} (${this.params.flushInterval}ms interval)`);
       this.timer = setTimeout(() => {
         this.flush(stream);
       }, this.params.flushInterval);
@@ -129,14 +128,14 @@ module.exports = class Tracker {
     timeout = timeout || 1000;
     if (!!batchStream && !!batchData) {
       // for send or retry method
-      logger.trace(`flushing ${batchStream} with ${batchData.length} items`);
+      this.logger.trace(`flushing ${batchStream} with ${batchData.length} items`);
       this._send(batchStream, batchData, timeout);
     }
 
     else if (!!batchStream && !batchData) {
       // send with custom stream when >= len || size
       if (!this.store.isEmpty(batchStream)) {
-        logger.trace(`flushing ${batchStream} with ${this.store.get(batchStream).length} items`);
+        this.logger.trace(`flushing ${batchStream} with ${this.store.get(batchStream).length} items`);
         this._send(batchStream, this.store.take(batchStream));
       }
     }
