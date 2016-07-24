@@ -1,11 +1,11 @@
 'use strict';
 
-const config = require('./../config');
+const sizeof = require('object-sizeof');
+const Promise = require('bluebird');
 
+const config = require('./../config');
 const ISAtom = require('./atom.class');
 const logger = require('./logger');
-const sizeof = require('object-sizeof');
-
 const LocalStore = require('./stores/local.class');
 
 module.exports = class Tracker {
@@ -21,44 +21,83 @@ module.exports = class Tracker {
    */
   constructor(params) {
     params = params || {};
-    this.params = params;
+    this.params = params || {};
     this.params.flushInterval = !!params.flushInterval ? params.flushInterval * 1000 : 10000;
     this.params.bulkLen = !!params.bulkLen ? params.bulkLen : 10000;
-    this.params.bulkSize = !!params.bulkSize ? params.bulkSize * 1024 :  64 * 1024; // change to Kb
+    this.params.bulkSize = !!params.bulkSize ? params.bulkSize * 1024 : 64 * 1024; // change to Kb
+    this.concurrency = params.concurrency || 10;
+
     this.logger = params.logger || logger;
     this.store = params.store || new LocalStore();
     this.atom = new ISAtom(params);
 
-    this.timer = null;
+    this.streamTimers = {};
 
     if (this.params.flushOnExit) {
       this.exitHandled = false;
-      process.on('exit', ()=>this._exitHandler());
-      process.on('SIGINT', ()=>this._exitHandler());
-      process.on('SIGHUP', ()=>this._exitHandler());
-      process.on('SIGQUIT', ()=>this._exitHandler());
-      process.on('SIGABRT', ()=>this._exitHandler());
-      process.on('SIGTERM', ()=>this._exitHandler());
+      ['exit', 'SIGINT', 'SIGHUP', 'SIGQUIT', 'SIGABRT', 'SIGTERM']
+        .map((e) => {
+          process.on(e, ()=>this._exitHandler())
+        });
     }
+
+    /**
+     * will process streams and determine whether they should be flushed each 100 milliseconds
+     * @type {any}
+     */
+    this.processInerval = setInterval(()=> {
+      this.process();
+    }, 100 /* ms */);
+
   }
 
+  /**
+   *
+   * @private
+   */
   _exitHandler() {
     // prevent multiple exit handlers to be called
     if (!this.exitHandled) {
       this.exitHandled = true;
+      clearInterval(this.processInerval);
       this.logger.trace('triggered flush due to process exit');
       this.flush();
     }
   }
+
   /**
    *
-   * @param streamData
+   * @return {number}
+   * @private
+   */
+  _getTimestamp() {
+    return +new Date();
+  }
+
+  /**
+   *
+   * @param stream
+   * @return {*|boolean}
+   * @private
+   */
+  _shouldTriggerIntervalFlush(stream) {
+    return this.streamTimers[stream] &&
+      this.params.flushInterval <= (this._getTimestamp() - this.streamTimers[stream]);
+  }
+
+  /**
+   *
+   * @param stream
    * @returns {boolean}
    * @private
    */
-  _shouldFlush(streamData) {
-    return streamData.length >= this.params.bulkLen || sizeof(streamData) >= this.params.bulkSize
+  _shouldFlush(stream) {
+    let streamData = this.store.get(stream);
+    return streamData.length >= this.params.bulkLen ||
+      sizeof(streamData) >= this.params.bulkSize ||
+      this._shouldTriggerIntervalFlush(stream)
   }
+
   /**
    *
    * Start track events
@@ -103,18 +142,16 @@ module.exports = class Tracker {
     if (stream == undefined || data == undefined) {
       throw new Error('Stream or data empty');
     }
-
     this.store.add(stream, data);
-    if (this._shouldFlush(this.store.get(stream))) {
-      this.flush(stream);
-    }
-    else if (!this.timer) {
-      this.logger.trace(`setting up timer for ${stream} (${this.params.flushInterval}ms interval)`);
-      this.timer = setTimeout(() => {
-        this.flush(stream);
-      }, this.params.flushInterval);
-    }
+  }
 
+  process() {
+    return Promise.map(this.store.keys, (stream)=> {
+      if (this._shouldFlush(stream)) {
+        this.streamTimers[stream] = this._getTimestamp();
+        return this.flush(stream);
+      }
+    }, {concurrency: this.concurrency});
   }
 
   /**
@@ -147,9 +184,9 @@ module.exports = class Tracker {
           this.flush(key, this.store.take(key));
         }
       }
-      this.timer = null;
     }
   }
+
   /* istanbul ignore next */
   /**
    *
@@ -161,20 +198,20 @@ module.exports = class Tracker {
    */
   _send(stream, data, timeout) {
     return this.atom.putEvents({"stream": stream, "data": data})
-        .catch((err) => {
-          if (err.status >= 500) {
-            if (timeout < 10 * 60 * 1000) {
-              setTimeout(()=> {
-                timeout = timeout * 2;
-                this.flush(stream, data, timeout);
-              }, timeout);
-            } else {
-              //some handler for err after 10min retry fail
-              return this.logger.error('Server not response more then 10min.');
-            }
+      .catch((err) => {
+        if (err.status >= 500) {
+          if (timeout < 10 * 60 * 1000) {
+            setTimeout(()=> {
+              timeout = timeout * 2;
+              this.flush(stream, data, timeout);
+            }, timeout);
           } else {
-            return this.logger.error(err);
+            //some handler for err after 10min retry fail
+            return this.logger.error('Server not response more then 10min.');
           }
-        });
+        } else {
+          return this.logger.error(err);
+        }
+      });
   }
 };
