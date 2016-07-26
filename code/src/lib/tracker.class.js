@@ -81,7 +81,7 @@ module.exports = class Tracker {
    * @private
    */
   _shouldTriggerIntervalFlush(stream) {
-    return this.streamTimers[stream] &&
+    return (this.streamTimers[stream] !== undefined) &&
       this.params.flushInterval <= (this._getTimestamp() - this.streamTimers[stream]);
   }
 
@@ -95,7 +95,7 @@ module.exports = class Tracker {
     let streamData = this.store.get(stream);
     return streamData.length >= this.params.bulkLen ||
       sizeof(streamData) >= this.params.bulkSize ||
-      this._shouldTriggerIntervalFlush(stream)
+        this._shouldTriggerIntervalFlush(stream);
   }
 
   /**
@@ -143,6 +143,10 @@ module.exports = class Tracker {
       throw new Error('Stream or data empty');
     }
     this.store.add(stream, data);
+    if (!this.streamTimers[stream]) {
+      this.streamTimers[stream] = this._getTimestamp();
+      logger.trace(`no timer set-up for stream ${stream}, setting.`);
+    }
   }
 
   process() {

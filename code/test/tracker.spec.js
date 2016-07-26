@@ -16,11 +16,13 @@ describe('Testing tracker class and methods', function () {
       return Promise.resolve();
     });
     sinon.spy(Tracker.prototype, 'flush');
+    sinon.spy(Tracker.prototype, 'process');
   });
 
   afterEach(function () {
     ISAtom.prototype.putEvents.restore();
     Tracker.prototype.flush.restore();
+    Tracker.prototype.process.restore();
   });
 
   it('should check correct data on tracker constructor', function () {
@@ -77,24 +79,29 @@ describe('Testing tracker class and methods', function () {
 
     t.track('stream', 'data');
     clock.tick(4100);
+    expect(t.process).to.have.callCount(41);
     expect(t.flush).to.have.been.calledOnce;
     clock.restore();
   });
 
   it('should make sure flushes are executed with proper batch size and without duplications', function () {
+    let clock = sinon.useFakeTimers();
     let tracker = new Tracker({
-      flushInterval: 20000,
+      flushInterval: 20000000,
       bulkLen: 20
     });
     let i = 0;
     while (i < 200) {
       tracker.track('stream', {id: i, uuid: uuid.v4()});
       i++;
+      clock.tick(100);
     }
 
+    expect(tracker.process).to.have.callCount(200);
     expect(tracker.flush).to.have.callCount(10);
   });
   it('should flush on process exit', function () {
+    let clock = sinon.useFakeTimers();
     let tracker = new Tracker({
       flushInterval: 20000,
       bulkLen: 50,
@@ -104,9 +111,11 @@ describe('Testing tracker class and methods', function () {
     while (i < 65) {
       tracker.track('stream', {id: i, uuid: uuid.v4()});
       i++;
+      clock.tick(100);
     }
 
     process.emit('SIGINT');
     expect(tracker.flush).to.have.been.calledThrice;
+    expect(tracker.process).to.have.callCount(65);
   });
 });
