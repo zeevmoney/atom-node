@@ -2,12 +2,13 @@
 
 const sizeof = require('object-sizeof');
 const Promise = require('bluebird');
+var promiseRetry = require('promise-retry');
+
 
 const config = require('./../config');
 const ISAtom = require('./atom.class');
 const logger = require('./logger');
 const LocalStore = require('./stores/local.class');
-
 module.exports = class Tracker {
   /**
    *
@@ -18,14 +19,33 @@ module.exports = class Tracker {
    * flushOnExit (default false) - whether all data should be flushed on application exit
    * logger optional(default console) - logger module
    * store (default localStore) - store module, implementation for the storage of keys and values
+   * retryOptions (object) - node-retry(https://github.com/tim-kos/node-retry) options
+   * - retries (default 10) - The maximum amount of times to retry the operation.
+   * - factor (default 2) - The exponential factor to use.
+   * - minTimeout (default 1000) - The number of milliseconds before starting the first retry.
+   * - maxTimeout (default Infinity)- The maximum number of milliseconds between two retries.
+   * - randomize (default false) - Randomizes the timeouts by multiplying with a factor between 1 to 2
    */
   constructor(params) {
     params = params || {};
     this.params = params || {};
+
+    // flush logic parameters
     this.params.flushInterval = !!params.flushInterval ? params.flushInterval * 1000 : 10000;
     this.params.bulkLen = !!params.bulkLen ? params.bulkLen : 10000;
     this.params.bulkSize = !!params.bulkSize ? params.bulkSize * 1024 : 64 * 1024; // change to Kb
+
+    // processing parameters
     this.concurrency = params.concurrency || 10;
+
+    // retry parameters
+    this.retryOptions = Object.assign({}, {
+      retries: 10,
+      randomize: true,
+      factor: 2,
+      minTimeout: 250,
+      maxTimeout: 25 * 60 * 60
+    }, params.retryOptions);
 
     this.logger = params.logger || logger;
     this.store = params.store || new LocalStore();
@@ -86,16 +106,22 @@ module.exports = class Tracker {
   }
 
   /**
-   *
+   * determines whether the stream should be flushed based on 3 conditions
+   * 1. payload length reached
+   * 2. payload size reached
+   * 3. time since last flush
    * @param stream
-   * @returns {boolean}
+   * @returns {boolean} - whether the stream should be flushed
    * @private
    */
   _shouldFlush(stream) {
-    let streamData = this.store.get(stream);
-    return streamData.length >= this.params.bulkLen ||
-      sizeof(streamData) >= this.params.bulkSize ||
-        this._shouldTriggerIntervalFlush(stream);
+    let payload = this.store.get(stream);
+    return payload.length && // first, we should not flush an empty array
+      (
+        payload.length >= this.params.bulkLen || // flush if we reached desired length
+        sizeof(payload) >= this.params.bulkSize || // flush if the object has reached desired byte-size
+        this._shouldTriggerIntervalFlush(stream) // should trigger based on interval
+      );
   }
 
   /**
@@ -191,31 +217,28 @@ module.exports = class Tracker {
     }
   }
 
-  /* istanbul ignore next */
   /**
-   *
    * @param stream
    * @param data
-   * @param timeout
    * @returns {Promise.<T>}
    * @private
    */
-  _send(stream, data, timeout) {
-    return this.atom.putEvents({"stream": stream, "data": data})
-      .catch((err) => {
-        if (err.status >= 500) {
-          if (timeout < 10 * 60 * 1000) {
-            setTimeout(()=> {
-              timeout = timeout * 2;
-              this.flush(stream, data, timeout);
-            }, timeout);
+  _send(stream, data) {
+    let payload = {stream: stream, data: data};
+    return promiseRetry((retry, number)=> {
+      return this.atom.putEvents(payload)
+        .then((data)=> {
+          this.logger.debug(`retry #${number} for stream '${stream}' completed successfully`);
+          return data;
+        })
+        .catch((err) => {
+          this.logger.warn(`retry #${number} for stream '${stream}' failed due to "${err.message}" (status ${err.status})`);
+          if (err.status >= 500) {
+            retry(err)
           } else {
-            //some handler for err after 10min retry fail
-            return this.logger.error('Server not response more then 10min.');
+            throw err;
           }
-        } else {
-          return this.logger.error(err);
-        }
-      });
+        });
+    }, this.retryOptions).then(Promise.resolve, Promise.reject);
   }
 };

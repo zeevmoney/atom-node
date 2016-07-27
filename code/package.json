@@ -24,6 +24,7 @@
     "co": "^4.6.0",
     "commander": "^2.9.0",
     "object-sizeof": "^1.0.10",
+    "promise-retry": "^1.1.0",
     "request": "^2.72.0"
   },
   "devDependencies": {

@@ -35,6 +35,7 @@ module.exports = class Request {
         });
     }
 
+    /* istanbul ignore next */
     get(endpoint) {
         // Generate the HMAC auth
         this.params.auth = !!this.params.auth
