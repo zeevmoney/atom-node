@@ -70,6 +70,8 @@ describe('Testing Request class and methods', function() {
     });
   });
 
+
+  // TODO: move this tests and fix them
   it('should check health method', function() {
     let atom = new ISAtom();
 

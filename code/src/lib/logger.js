@@ -1,3 +1,4 @@
+// Simple logger, you can replace it with bunyan or anything else...
 module.exports = {
   error: console.error,
   warn: console.warn,
