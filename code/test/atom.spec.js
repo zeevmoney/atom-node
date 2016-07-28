@@ -72,14 +72,27 @@ describe('Atom class test', function () {
   });
 
   it('should throw error for putEvent/putEvents if no required params', function () {
+    try {
       var atom = new ISAtom();
-    
-      expect(atom.putEvent({stream: "test"})).to.eql(logger.error('Data is required and should be a string'));
-    
-      expect(atom.putEvent({})).to.eql(logger.error('Stream name is required!'));
-    
-      expect(atom.putEvents({stream: "test"})).to.eql(logger.error('Data must a be a non-empty Array'));
-    
-      expect(atom.putEvents({data: ['some data']})).to.eql(logger.error('Stream name is required'));
+      atom.putEvent({stream: "test"})
+    } catch (err) {
+      expect(err).to.eql('Data is required and should be a string');
+    }
+    try {
+      atom.putEvent({})
+    } catch (err) {
+      expect(err).to.eql('Stream name is required!');
+    }
+    try {
+      atom.putEvents({stream: "test"})
+    } catch (err) {
+      expect(err).to.eql('Data must a be a non-empty Array');
+    }
+    try {
+      atom.putEvents({data: ['some data']})
+    } catch (err) {
+      expect(err).to.eql('Stream name is required');
+    }
+
   });
 });

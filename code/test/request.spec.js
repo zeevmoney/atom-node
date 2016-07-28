@@ -69,14 +69,16 @@ describe('Testing Request class and methods', function() {
       done();
     });
   });
-  
+
+
+  // TODO: move this tests and fix them
   it('should check health method', function() {
     let atom = new ISAtom();
 
     atom.health().then(function(res) {
       expect(res).to.be.eql('Server for this url is up!');
     });
-    
+
     atom.health('http://localhost:3000/server-err').then().catch(function(err) {
       expect(err).to.be.eql('Server for this url is down!');
     });

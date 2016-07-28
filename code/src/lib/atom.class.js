@@ -3,6 +3,7 @@
 const config = require('./../config');
 const logger = require('./logger');
 const Request = require('./request.class');
+const Promise = require('bluebird');
 
 class IronSourceAtom {
   constructor(options) {
@@ -64,7 +65,7 @@ class IronSourceAtom {
     if (!params.data || (typeof params.data !== 'string' && !(params.data instanceof String)))
       return logger.error('Data is required and should be a string');
     params.apiVersion = this.apiVersion;
-    params.auth = this.auth;
+    params.auth = !!params.auth ? params.auth : this.auth;
     params.bulk = false;
     return new Request(this.endpoint, params);
   }
@@ -115,17 +116,20 @@ class IronSourceAtom {
 
   putEvents(params) {
     params = params || {};
-    if (!params.stream)
-      return logger.error('Stream is required');
-    if (!params.data || !(params.data.constructor == Array) || !params.data.length)
-      return logger.error('Data must a be a non-empty Array');
+    if (!params.stream) {
+      return Promise.reject(new Error('Stream is required'));
+    }
+
+    if (!params.data || !(params.data.constructor == Array) || !params.data.length) {
+      return Promise.reject(new Error('Data must a be a non-empty Array'));
+    }
     try {
       params.data = JSON.stringify(params.data);
     } catch (err) {
-      return logger.error("Invalid data", err);
+      return Promise.reject(new Error("Invalid data", err));
     }
     params.apiVersion = this.apiVersion;
-    params.auth = this.auth;
+    params.auth = !!params.auth ? params.auth : this.auth;
     params.bulk = true;
     return new Request(this.endpoint, params);
   }
