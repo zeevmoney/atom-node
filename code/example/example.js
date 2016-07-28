@@ -3,11 +3,12 @@
 // for npm do -> require('atom-node');
 
 const ISAtom = require('../src').ISAtom;
+const Tracker = require('../src').Tracker;
 const co = require('co');
 const program = require('commander');
 
 let atom = new ISAtom({
-  auth: ""
+  auth: "I40iwPPOsG3dfWX30labriCg9HqMfL"
 });
 
 program
@@ -15,12 +16,14 @@ program
   .option('-p, --putevent', 'Run the putEvent examples')
   .option('-P, --putevents', 'Run the putEvents examples')
   .option('-H, --health', 'run the health check example', {isDefault: true})
+  .option('-t, --tracker', 'run the tracker example')
   .option('-a, --all', 'Run all of the examples')
   .parse(process.argv);
 
 if (program.putevent) putEventExamples();
 if (program.putevents) putEventsExample();
 if (program.health) healthExample();
+if (program.tracker) trackerExample();
 if (program.all) runAllExamples();
 if (!process.argv.slice(2).length) {
   program.outputHelp();
@@ -30,6 +33,7 @@ function runAllExamples() {
   putEventExamples();
   putEventsExample();
   healthExample();
+  trackerExample();
 }
 
 
@@ -94,7 +98,7 @@ function healthExample() {
 
 function putEventsExample() {
   let bulk = {
-    stream: "sdkdev_sdkdev.public.zeev",
+    stream: "test",
     data: []
   };
 
@@ -117,4 +121,33 @@ function putEventsExample() {
   }).catch(function (err) {
     console.log('PutEvents error:', err);
   });
+}
+
+function trackerExample() {
+  const params = {
+    endpoint: "https://track.atom-data.io/",
+    auth: "",
+    flushInterval: 10, // Flushing interval in seconds
+    bulkLen: 9, // Max count for events for send
+    bulkSize: 64 // Max size of data for send in Kb
+  };
+
+  let tracker = new Tracker(params);
+
+  for (let i = 0; i < 10; i++) {
+    let number = Math.random() * (3000 - 3) + 3;
+    let data = {
+      strings: String(number),
+      ints: Math.round(number),
+      floats: number,
+      ts: new Date(),
+      batch: true
+    };
+    tracker.track("test", data);
+  }
+  console.log(`Sending 10 events to Atom`);
+
+// for sending events immediately use
+//  tracker.flush();
+
 }

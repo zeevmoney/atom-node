@@ -21,20 +21,21 @@ $ npm install --save atom-node
 const IronSourceAtom = require('atom-node');
 ```
 
-#### Using the API layer to send events
-Here's an example of sending an event high lvl api:
+#### Using the high level (tracker) layer to send events
+Example:
 ```js
 const params = {
   endpoint: "https://track.atom-data.io/",
   auth: "YOUR_API_KEY",
-  flushInterval: 10, // Time for send events to interval in sec
-  bulkLen: 10000, // Max count for events for send
-  bulkSize: 64 // Max size of data for send in Kb
+  flushInterval: 10, // Flusing interval in seconds
+  bulkLen: 10000, // Max count for events to send
+  bulkSize: 64 // Max size of data in Kb
 }
 
 let tracker = new Tracker(params);
+let payload = {"id": 123, "strings": "abcd"};
 
-tracker.track({table: "STREAM NAME", data: 'some data'});
+tracker.track("STREAM NAME", payload);
 
 // for send event immediately use
 tracker.flush();
@@ -51,7 +52,7 @@ const options = {
 let atom = new IronSourceAtom(options);
 
 let params = {
-  table: "STREAM_NAME", //your target stream name
+  stream: "STREAM_NAME", //your target stream name
   data: JSON.stringify({name: "iron", last_name: "Source"}), //String with any data and any structure.
 }
 
