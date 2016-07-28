@@ -3,23 +3,23 @@
 const sizeof = require('object-sizeof');
 const Promise = require('bluebird');
 var promiseRetry = require('promise-retry');
-
-
 const config = require('./../config');
 const ISAtom = require('./atom.class');
 const logger = require('./logger');
 const LocalStore = require('./stores/local.class');
+
 module.exports = class Tracker {
   /**
    *
    * @param params
-   * flushInterval optional(default 1 second) - interval in seconds in which the event's should be flushed
-   * bulkLen optional(default 10000) - max length of each key in store
-   * bulkSize optional(default 64kb) - max size in kb for each key in store
+   * flushInterval optional(default 10 seconds) - interval in seconds in which the events should be flushed
+   * bulkLen optional(default 10000) - max length of each key in store (the data array of each stream)
+   * bulkSize optional(default 64kb) - max size in kb for each key in store (the data array of each stream)
    * flushOnExit (default false) - whether all data should be flushed on application exit
    * logger optional(default console) - logger module
    * store (default localStore) - store module, implementation for the storage of keys and values
    * retryOptions (object) - node-retry(https://github.com/tim-kos/node-retry) options
+   * auth optional - your atom api key
    * - retries (default 10) - The maximum amount of times to retry the operation.
    * - factor (default 2) - The exponential factor to use.
    * - minTimeout (default 1000) - The number of milliseconds before starting the first retry.
@@ -38,7 +38,7 @@ module.exports = class Tracker {
     // processing parameters
     this.concurrency = params.concurrency || 10;
 
-    // retry parameters
+    // retry parameters for exponential backoff
     this.retryOptions = Object.assign({}, {
       retries: 10,
       randomize: true,
@@ -51,6 +51,7 @@ module.exports = class Tracker {
     this.store = params.store || new LocalStore();
     this.atom = new ISAtom(params);
 
+    // timers dictionary for each stream
     this.streamTimers = {};
 
     if (this.params.flushOnExit) {
@@ -118,7 +119,7 @@ module.exports = class Tracker {
     let payload = this.store.get(stream);
     return payload.length && // first, we should not flush an empty array
       (
-        payload.length >= this.params.bulkLen || // flush if we reached desired length
+        payload.length >= this.params.bulkLen || // flush if we reached desired length (amount of events)
         sizeof(payload) >= this.params.bulkSize || // flush if the object has reached desired byte-size
         this._shouldTriggerIntervalFlush(stream) // should trigger based on interval
       );
@@ -190,25 +191,22 @@ module.exports = class Tracker {
    * @param batchData
    * @param timeout
    */
-  flush(batchStream, batchData, timeout) {
+  flush(batchStream, batchData) {
 
-    timeout = timeout || 1000;
     if (!!batchStream && !!batchData) {
       // for send or retry method
       this.logger.trace(`flushing ${batchStream} with ${batchData.length} items`);
-      this._send(batchStream, batchData, timeout);
-    }
+      this._send(batchStream, batchData);
 
-    else if (!!batchStream && !batchData) {
+    } else if (!!batchStream && !batchData) {
       // send with custom stream when >= len || size
       if (!this.store.isEmpty(batchStream)) {
         this.logger.trace(`flushing ${batchStream} with ${this.store.get(batchStream).length} items`);
         this._send(batchStream, this.store.take(batchStream));
       }
-    }
 
-    else {
-      //send all when no params
+    } else {
+      //send all when no params were given
       for (let key of this.store.keys) {
         if (!this.store.isEmpty(key)) {
           this.flush(key, this.store.take(key));

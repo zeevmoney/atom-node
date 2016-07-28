@@ -65,7 +65,7 @@ class IronSourceAtom {
     if (!params.data || (typeof params.data !== 'string' && !(params.data instanceof String)))
       return logger.error('Data is required and should be a string');
     params.apiVersion = this.apiVersion;
-    params.auth = this.auth;
+    params.auth = !!params.auth ? params.auth : this.auth;
     params.bulk = false;
     return new Request(this.endpoint, params);
   }
@@ -129,7 +129,7 @@ class IronSourceAtom {
       return Promise.reject(new Error("Invalid data", err));
     }
     params.apiVersion = this.apiVersion;
-    params.auth = this.auth;
+    params.auth = !!params.auth ? params.auth : this.auth;
     params.bulk = true;
     return new Request(this.endpoint, params);
   }
