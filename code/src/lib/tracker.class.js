@@ -172,7 +172,7 @@ module.exports = class Tracker {
     this.store.add(stream, data);
     if (!this.streamTimers[stream]) {
       this.streamTimers[stream] = this._getTimestamp();
-      logger.trace(`no timer set-up for stream ${stream}, setting.`);
+      this.logger.trace(`no timer set-up for stream ${stream}, setting.`);
     }
   }
 
