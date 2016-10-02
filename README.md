@@ -18,7 +18,7 @@ $ npm install --save atom-node
 ##### Add script file
 ```js
 // ...
-const IronSourceAtom = require('atom-node');
+const AtomTracker = require('atom-node').Tracker;
 ```
 
 #### Using the high level (tracker) layer to send events
@@ -32,7 +32,7 @@ const params = {
   bulkSize: 64 // Max size of data in Kb
 }
 
-let tracker = new Tracker(params);
+let tracker = new AtomTracker(params);
 let payload = {"id": 123, "strings": "abcd"};
 
 tracker.track("STREAM NAME", payload);
@@ -43,13 +43,14 @@ tracker.flush();
 
 Here's an example of sending an event low lvl api:
 ```js
+const AtomReporter = require('atom-node').ISAtom;
 
 const options = {
   endpoint: "https://track.atom-data.io/",
   auth: "YOUR_API_KEY"
-}
+};
 
-let atom = new IronSourceAtom(options);
+let atom = new AtomReporter(options);
 
 let params = {
   stream: "STREAM_NAME", //your target stream name
@@ -65,7 +66,7 @@ atom.putEvent(params).then(function(response){
 // or
 
 let params = {
-  table: "STREAM_NAME", // your target stream name
+  stream: "STREAM_NAME", // your target stream name
   data: [{name: "iron", last_name: "Beast"},
          {name: "iron2", last_name: "Beast2"}], // Array with any data and any structure.
 }
