@@ -1,12 +1,14 @@
 'use strict';
 
 const Request = require('../src/lib/request.class');
-const ISAtom = require('../src/lib/atom.class');
 const express = require('express');
+const chai = require('chai');
+const chaiAsPromised = require("chai-as-promised");
 const app = express();
-const expect = require('chai').expect;
 const mock = require("./mock/is.mock");
 const assert = require('assert');
+chai.use(chaiAsPromised);
+const expect = chai.expect;
 
 app.post(/endpoint(\?data=.*)?/, function(req, res){
   res.status(200);
@@ -70,17 +72,4 @@ describe('Testing Request class and methods', function() {
     });
   });
 
-
-  // TODO: move this tests and fix them
-  it('should check health method', function() {
-    let atom = new ISAtom();
-
-    atom.health().then(function(res) {
-      expect(res).to.be.eql('Server for this url is up!');
-    });
-
-    atom.health('http://localhost:3000/server-err').then().catch(function(err) {
-      expect(err).to.be.eql('Server for this url is down!');
-    });
-  })
 });

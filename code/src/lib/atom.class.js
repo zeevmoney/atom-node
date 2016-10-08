@@ -61,9 +61,9 @@ class IronSourceAtom {
   putEvent(params) {
     params = params || {};
     if (!params.stream)
-      return logger.error('Stream name is required!');
+      return Promise.reject('Stream name is required');
     if (!params.data || (typeof params.data !== 'string' && !(params.data instanceof String)))
-      return logger.error('Data is required and should be a string');
+      return Promise.reject('Data is required and should be a string');
     params.apiVersion = this.apiVersion;
     params.auth = !!params.auth ? params.auth : this.auth;
     params.bulk = false;
@@ -117,7 +117,7 @@ class IronSourceAtom {
   putEvents(params) {
     params = params || {};
     if (!params.stream) {
-      return Promise.reject(new Error('Stream is required'));
+      return Promise.reject(new Error('Stream name is required'));
     }
 
     if (!params.data || !(params.data.constructor == Array) || !params.data.length) {
