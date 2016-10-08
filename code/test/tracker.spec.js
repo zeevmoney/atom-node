@@ -10,7 +10,7 @@ const expect = require('chai').expect;
 const Tracker = Promise.promisifyAll(require('../src/lib/tracker.class'));
 const ISAtom = require('../src/lib/atom.class');
 
-chai.use(require('sinon-chai'));
+// chai.use(require('sinon-chai'));
 
 describe('Testing tracker class and methods', function () {
 

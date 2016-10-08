@@ -1,10 +1,13 @@
 'use strict';
 
 const ISAtom = require('../src').ISAtom;
-const expect = require('chai').expect;
+const chai = require("chai");
+const chaiAsPromised = require("chai-as-promised");
 const mock = require("./mock/is.mock");
 const config = require('../src/config');
 const logger = require('../src/lib/logger');
+chai.use(chaiAsPromised);
+const expect = chai.expect;
 
 describe('Atom class test', function () {
 
@@ -72,27 +75,11 @@ describe('Atom class test', function () {
   });
 
   it('should throw error for putEvent/putEvents if no required params', function () {
-    try {
-      var atom = new ISAtom();
-      atom.putEvent({stream: "test"})
-    } catch (err) {
-      expect(err).to.eql('Data is required and should be a string');
-    }
-    try {
-      atom.putEvent({})
-    } catch (err) {
-      expect(err).to.eql('Stream name is required!');
-    }
-    try {
-      atom.putEvents({stream: "test"})
-    } catch (err) {
-      expect(err).to.eql('Data must a be a non-empty Array');
-    }
-    try {
-      atom.putEvents({data: ['some data']})
-    } catch (err) {
-      expect(err).to.eql('Stream name is required');
-    }
-
+    let atom = new ISAtom();
+    expect(atom.putEvent({stream: "test"})).to.be.rejectedWith('Data is required and should be a string');
+    expect(atom.putEvent({})).to.be.rejectedWith('Stream name is required');
+    expect(atom.putEvents({stream: "test"})).to.be.rejectedWith('Data must a be a non-empty Array');
+    expect(atom.putEvents({data: ['some data']})).to.be.rejectedWith('Stream name is required');
   });
+
 });
