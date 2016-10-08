@@ -172,7 +172,7 @@ module.exports = class Tracker {
     this.store.add(stream, data);
     if (!this.streamTimers[stream]) {
       this.streamTimers[stream] = this._getTimestamp();
-      this.logger.trace(`no timer set-up for stream ${stream}, setting.`);
+      this.logger.trace(`[track] no timer set-up for stream ${stream}, setting.`);
     }
   }
 
@@ -195,13 +195,13 @@ module.exports = class Tracker {
 
     if (!!batchStream && !!batchData) {
       // for send or retry method
-      this.logger.trace(`flushing ${batchStream} with ${batchData.length} items`);
+      this.logger.trace(`[flush] flushing ${batchStream} with ${batchData.length} items`);
       this._send(batchStream, batchData);
 
     } else if (!!batchStream && !batchData) {
       // send with custom stream when >= len || size
       if (!this.store.isEmpty(batchStream)) {
-        this.logger.trace(`flushing ${batchStream} with ${this.store.get(batchStream).length} items`);
+        this.logger.trace(`[flush] flushing ${batchStream} with ${this.store.get(batchStream).length} items`);
         this._send(batchStream, this.store.take(batchStream));
       }
 

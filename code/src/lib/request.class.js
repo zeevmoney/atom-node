@@ -118,15 +118,14 @@ module.exports = class Request {
     return this._fetch('get', options)
       .spread(function (response, body) {
         if (response.statusCode >= 400) {
-          throw {message: "Atom API is down", status: response.statusCode}
+          return Promise.reject({message: "Atom API is down", status: response.statusCode});
         }
-        return {message: "Atom API is up", status: response.statusCode}
+        return Promise.resolve({message: "Atom API is up", status: response.statusCode});
       })
       .catch(function (err) {
         if (err.status >= 400) {
           return Promise.reject(err)
         }
-        logger.error(err);
         return Promise.reject({message: 'Connection Problem', status: 400});
       });
   }

@@ -11,6 +11,8 @@ const expect = chai.expect;
 
 describe('Atom class test', function () {
 
+  // this.timeout(3000);
+
   it('should generate new IronSourceAtom object with default values', function () {
     var atom = new ISAtom();
 
@@ -81,5 +83,15 @@ describe('Atom class test', function () {
     expect(atom.putEvents({stream: "test"})).to.be.rejectedWith('Data must a be a non-empty Array');
     expect(atom.putEvents({data: ['some data']})).to.be.rejectedWith('Stream name is required');
   });
+
+  it('should check health method', function() {
+    let atom = new ISAtom();
+
+    // atom.health().then(function(res) {
+    //   expect(res).to.be.eql('Server for this url is up!');
+    // });
+
+    return expect(atom.health('http://localhost:3000/server-err')).to.be.rejectedWith('Connection Problem');
+  })
 
 });
