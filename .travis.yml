@@ -1,7 +1,7 @@
 language: node_js
 node_js:
-  - "4.2"
-  - "5.1"
+  - "stable"
+  - "4"
 before_install:
 - cd code && npm i
 script:
