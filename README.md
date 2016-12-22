@@ -21,8 +21,12 @@ $ npm install --save atom-node
 const AtomTracker = require('atom-node').Tracker;
 ```
 
-#### Using the high level (tracker) layer to send events
-Example:
+## Usage
+### High Level API - "Tracker"
+The tracker is used for sending events to Atom based on several conditions
+- Every 10 seconds (default)
+- Number of accumulated events has reached 10000 (default)
+- Size of accumulated events has reached 64Kb (default)
 ```js
 const params = {
   endpoint: "https://track.atom-data.io/",
@@ -41,7 +45,7 @@ tracker.track("STREAM NAME", payload);
 tracker.flush();
 ```
 
-Here's an example of sending an event low lvl api:
+### Low Level API
 ```js
 const AtomReporter = require('atom-node').ISAtom;
 

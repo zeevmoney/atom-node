@@ -2,10 +2,10 @@
 
 const Request = require('../src/lib/request.class');
 const express = require('express');
+const sinon = require('sinon')
 const chai = require('chai');
 const chaiAsPromised = require("chai-as-promised");
 const app = express();
-const mock = require("./mock/is.mock");
 const assert = require('assert');
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -37,8 +37,13 @@ app.get(/err(\?data=.*)?/, function(req, res){
   res.send({"error": "No permission for this table"})
 });
 
+app.get('/health', function(req, res){
+  res.status(200);
+  res.send({"status": "OK"})
+});
+
 describe('Testing Request class and methods', function() {
-  before(function(){
+  before(function () {
     app.listen(3000);
   });
 
@@ -46,30 +51,80 @@ describe('Testing Request class and methods', function() {
     table: "tableName",
     data: "analyticsData"
   };
+  let req;
   const endpoint = 'http://localhost:3000/';
-
-  it('should send POST request', function(done) {
-    let req = new Request(endpoint + 'endpoint', params);
-
-    req.then(function(res) {
-      expect(res).to.be.eql({
-        message: {status: "OK"},
-        status: 200
+  describe('handling POST requests', () => {
+    it('should send POST request', function (done) {
+      req = new Request(endpoint + 'endpoint', params);
+      req.then(function (res) {
+        expect(res).to.be.eql({
+          message: {status: "OK"},
+          status: 200
+        });
+        done();
       });
-      done();
     });
-  });
-
-  it('should handle POST request error', function(done) {
-    let req = new Request(endpoint + 'err', params);
-
-    req.catch(function(err) {
-      expect(err).to.be.eql({
-        message: {error:'No permission for this table'},
-        status: 401
+    it('should handle POST request error', function (done) {
+      req = new Request(endpoint + 'err', params);
+      req.catch(function (err) {
+        expect(err).to.be.eql({
+          message: {error: 'No permission for this table'},
+          status: 401
+        });
+        done();
       });
-      done();
     });
+  })
+  describe('handling GET requests', () => {
+    before(() => {
+      params.method = "GET"
+    });
+    describe('When the endpoint doesnt return an ferror', () => {
+      before(() => {
+        req = new Request(endpoint + 'endpoint', params);
+      });
+      it('should send GET requests', () => {
+        return req.then( res => {
+          expect(res).to.be.eql({
+            message: {status: "OK"},
+            status: 200
+          });
+        })
+      })
+    });
+    describe('When the endpoint returns an error code', () => {
+      before(() => {
+        req = new Request(endpoint + 'err', params);
+      });
+      it('should handle GET request error', () => {
+        return req.catch(err => {
+          expect(err).to.be.eql({
+            message:{error: "No permission for this table"},
+            status: 401
+          })
+        })
+      })
+    })
   });
-
+  describe('Testing health endpoint', () => {
+    describe('if endpoint is healthy', () => {
+      before(() => {
+        params = 'health';
+        sinon.spy(Request.prototype, "_fetch");
+        req = new Request(endpoint, params);
+      });
+      it('should return a resolved promise', () => {
+        expect(req).to.be.fulfilled
+      })
+      it('request should be sent', () => {
+        expect(Request.prototype._fetch).to.be.calledOnce
+      })
+      after(() => {
+        params = {
+          table: "tableName",
+          data: "analyticsData"
+        };
+      })
+    })
+  })
 });

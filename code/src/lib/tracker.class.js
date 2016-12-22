@@ -2,7 +2,7 @@
 
 const sizeof = require('object-sizeof');
 const Promise = require('bluebird');
-var promiseRetry = require('promise-retry');
+const promiseRetry = require('promise-retry');
 const config = require('./../config');
 const ISAtom = require('./atom.class');
 const logger = require('./logger');

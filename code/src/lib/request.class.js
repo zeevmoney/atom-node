@@ -37,7 +37,6 @@ module.exports = class Request {
     });
   }
 
-  /* istanbul ignore next */
   get(endpoint) {
     // Generate the HMAC auth
     this.params.auth = !!this.params.auth
@@ -104,12 +103,14 @@ module.exports = class Request {
           return Promise.reject(err);
         }
         logger.error(err);
-        return Promise.reject({message: 'Connection Problem', status: 400});
+        return Promise.reject({message: 'Connection Problem', status: 500});
       });
   }
 
   health(endpoint) {
-    /* istanbul ignore next */
+    if (endpoint.slice(-1) == '/') {
+      endpoint=endpoint.slice(0, -1)
+    }
     let options = {
       url: endpoint + '/health',
       headers: this.headers,
@@ -117,6 +118,7 @@ module.exports = class Request {
     };
     return this._fetch('get', options)
       .spread(function (response, body) {
+
         if (response.statusCode >= 400) {
           return Promise.reject({message: "Atom API is down", status: response.statusCode});
         }
@@ -129,5 +131,4 @@ module.exports = class Request {
         return Promise.reject({message: 'Connection Problem', status: 400});
       });
   }
-
 };
