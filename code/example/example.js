@@ -40,7 +40,7 @@ function runAllExamples() {
 function putEventExamples() {
 
   let data = {
-    stream: "test",
+    stream: "ibtest",
     data: JSON.stringify({
       strings: "hi",
       ints: 123,
@@ -79,7 +79,7 @@ function putEventExamples() {
   });
 
   // With bad endpoint
-  atom.endpoint = 'http://127.0.0.1';
+  atom.endpoint = 'https://track.atom-data.io';
   atom.putEvent(data).then(function (res) {
     console.log('PutEvent POST success:', res);
   }).catch(function (err) {
@@ -89,7 +89,7 @@ function putEventExamples() {
 }
 
 function healthExample() {
-  atom.health().then(function (res) {
+  atom.health('https://track.atom-data.io/').then(function (res) {
     console.log('Health check success:', res);
   }, function (err) {
     console.log('Health check failure:', err);
@@ -98,7 +98,7 @@ function healthExample() {
 
 function putEventsExample() {
   let bulk = {
-    stream: "test",
+    stream: "ibtest",
     data: []
   };
 
@@ -143,7 +143,7 @@ function trackerExample() {
       ts: new Date(),
       batch: true
     };
-    tracker.track("test", data);
+    tracker.track("ibtest", data);
   }
   console.log(`Sending 10 events to Atom`);
 

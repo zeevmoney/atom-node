@@ -10,6 +10,7 @@ const ISAtom = require('../src/lib/atom.class');
 
 chai.use(require('sinon-chai'));
 const expect = chai.expect;
+require('co-mocha');
 
 
 describe('Testing tracker class and methods', function () {
@@ -34,7 +35,8 @@ describe('Testing tracker class and methods', function () {
       expect(t.params).to.be.eql({
         flushInterval: 10000,
         bulkLen: 10000,
-        bulkSize: 64 * 1024
+        bulkSize: 64 * 1024,
+        onError: null
       });
 
       let params = {
@@ -47,7 +49,8 @@ describe('Testing tracker class and methods', function () {
       expect(p.params).to.be.eql({
         flushInterval: 1000,
         bulkLen: 100,
-        bulkSize: 1024
+        bulkSize: 1024,
+        onError:null
       })
     });
 
@@ -118,7 +121,7 @@ describe('Testing tracker class and methods', function () {
         clock.tick(100);
       }
 
-      process.emit('SIGHUP'); // using SIGHUP instead of SIGNIT since SIGINT causes mocha to quit as well
+      process.emit('SIGHUP'); // using SIGHUP instead of SIGINT since SIGINT causes mocha to quit as well
       expect(tracker.flush).to.have.been.calledTwice;
       expect(tracker.process).to.have.callCount(65);
       clock.restore();
@@ -142,6 +145,26 @@ describe('Testing tracker class and methods', function () {
       ISAtom.prototype.putEvents.restore();
       Tracker.prototype.flush.restore();
       Tracker.prototype.process.restore();
+    });
+
+    it('should trigger the callback if everything fails', function* () {
+      let params = {
+        flushInterval: 1,
+        bulkLen: 1,
+        bulkSize: 1,
+        retryOptions: {
+          random: false,
+          minTimeout: 1,
+          maxTimeout: 3,
+          retries: 3
+        },
+        onError:sinon.spy(() => {
+          console.log("Called!")
+        })
+      };
+      let tracker = new Tracker(params);
+      yield tracker._send('stream', [{a: 1, b: 2, c: 3}]);
+      expect(tracker.params.onError).to.be.calledOnce
     });
 
     it('should retry after send failure', co.wrap(function *(done) {

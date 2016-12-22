@@ -34,6 +34,9 @@ const params = {
   flushInterval: 10, // Flusing interval in seconds
   bulkLen: 10000, // Max count for events to send
   bulkSize: 64 // Max size of data in Kb
+  onError: (data) => {
+    console.log(`failed sending ${data}`); // Will be called if max retries fail.
+  }
 }
 
 let tracker = new AtomTracker(params);

@@ -15,6 +15,7 @@ module.exports = class Tracker {
    * flushInterval optional(default 10 seconds) - interval in seconds in which the events should be flushed
    * bulkLen optional(default 10000) - max length of each key in store (the data array of each stream)
    * bulkSize optional(default 64kb) - max size in kb for each key in store (the data array of each stream)
+   * onError optional(default null) - The callback that will be invoked with the failed event if the maximum retries fail
    * flushOnExit (default false) - whether all data should be flushed on application exit
    * logger optional(default console) - logger module
    * store (default localStore) - store module, implementation for the storage of keys and values
@@ -34,6 +35,7 @@ module.exports = class Tracker {
     this.params.flushInterval = !!params.flushInterval ? params.flushInterval * 1000 : 10000;
     this.params.bulkLen = !!params.bulkLen ? params.bulkLen : 10000;
     this.params.bulkSize = !!params.bulkSize ? params.bulkSize * 1024 : 64 * 1024; // change to Kb
+    this.params.onError = params.onError ? params.onError : null
 
     // processing parameters
     this.concurrency = params.concurrency || 10;
@@ -46,7 +48,6 @@ module.exports = class Tracker {
       minTimeout: 250,
       maxTimeout: 25 * 60 * 60
     }, params.retryOptions);
-
     this.logger = params.logger || logger;
     this.store = params.store || new LocalStore();
     this.atom = new ISAtom(params);
@@ -237,6 +238,10 @@ module.exports = class Tracker {
             throw err;
           }
         });
-    }, this.retryOptions).then(Promise.resolve, Promise.reject);
+    }, this.retryOptions).then(Promise.resolve).catch(() => {
+      if (this.params.onError) {
+        this.params.onError(data)
+      }
+    });
   }
 };
