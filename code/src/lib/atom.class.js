@@ -116,22 +116,22 @@ class IronSourceAtom {
 
   putEvents(params) {
     params = params || {};
-    if (!params.stream) {
+    let copy = Object.assign({}, params);
+    if (!copy.stream) {
       return Promise.reject(new Error('Stream name is required'));
     }
-
-    if (!params.data || !(params.data.constructor == Array) || !params.data.length) {
+    if (!copy.data || !(Array.isArray(copy.data)) || !copy.data.length) {
       return Promise.reject(new Error('Data must a be a non-empty Array'));
     }
     try {
-      params.data = JSON.stringify(params.data);
+      copy.data = JSON.stringify(copy.data);
     } catch (err) {
       return Promise.reject(new Error("Invalid data", err));
     }
-    params.apiVersion = this.apiVersion;
-    params.auth = !!params.auth ? params.auth : this.auth;
-    params.bulk = true;
-    return new Request(this.endpoint, params);
+    copy.apiVersion = this.apiVersion;
+    copy.auth = !!copy.auth ? copy.auth : this.auth;
+    copy.bulk = true;
+    return new Request(this.endpoint, copy);
   }
 
   /**
