@@ -11,20 +11,11 @@ function ISAtomMock(opt) {
   };
 
   this.putEvents = this.putEvent = function(params) {
-    var req = new RequestMockHelper(this.options.endpoint, params);
-
     params.apiVersion = this.options.apiVersion;
     params.auth = this.options.auth;
 
     return req.post();
   };
-}
-
-function RequestMockHelper(url, params) {
-
-  this.post = function() {
-    return params;
-  }
 }
 
 module.exports = {
