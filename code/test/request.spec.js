@@ -1,130 +1,353 @@
 'use strict';
 
 const Request = require('../src/lib/request.class');
-const express = require('express');
-const sinon = require('sinon')
 const chai = require('chai');
 const chaiAsPromised = require("chai-as-promised");
-const app = express();
-const assert = require('assert');
+const config = require('../src/config');
+const crypto = require('crypto');
 chai.use(chaiAsPromised);
 const expect = chai.expect;
+// require('co-mocha');
+const nock = require('nock');
 
-app.post(/endpoint(\?data=.*)?/, function(req, res){
-  res.status(200);
-  res.send({"status": "OK"})
-});
-app.get(/endpoint(\?data=.*)?/, function(req, res){
-  res.status(200);
-  res.send({"status": "OK"})
-});
+const AtomError = require('../src/lib/utils').AtomError;
 
-app.post(/server-err(\?data=.*)?/, function(req, res){
-  res.status(500);
-  res.send({"error": "Server error"})
-});
-app.get(/server-err(\?data=.*)?/, function(req, res){
-  res.status(500);
-  res.send({"error": "Server error"})
-});
+describe.only('Request Class', () => {
 
-app.post(/err(\?data=.*)?/, function(req, res){
-  res.status(401);
-  res.send({"error": "No permission for this table"})
-});
-app.get(/err(\?data=.*)?/, function(req, res){
-  res.status(401);
-  res.send({"error": "No permission for this table"})
-});
+  describe('Request class initialisation', () => {
+    let request;
+    let testFunction;
 
-app.get('/health', function(req, res){
-  res.status(200);
-  res.send({"status": "OK"})
-});
+    before(() => {
+      request = new Request({
+        endpoint: config.END_POINT,
+        sdkType: config.SDK_TYPE,
+        sdkVersion: config.SDK_VERSION,
+        data: {"a": 123},
+        stream: "hi"
+      });
+    });
 
-describe('Testing Request class and methods', function() {
-  before(function () {
-    app.listen(3000);
+    it('should init a Request object with correct parameters', function*() {
+      expect(request.params).to.be.eql({
+        endpoint: config.END_POINT,
+        sdkType: config.SDK_TYPE,
+        sdkVersion: config.SDK_VERSION,
+        data: JSON.stringify({"a": 123}),
+        stream: "hi"
+      });
+    });
+
+    before(() => {
+      let obj = {};
+      obj.a = {b: obj};
+      testFunction = function () {
+        new Request({endpoint: '/endpoint', data: obj});
+      };
+    });
+
+    it('should return an error on invalid data', function*() {
+      expect(testFunction).to.throw(`data is invalid - can't be stringified`);
+      expect(testFunction).to.throw(AtomError);
+    });
+
   });
 
-  let params = {
-    table: "tableName",
-    data: "analyticsData"
-  };
-  let req;
-  const endpoint = 'http://localhost:3000/';
   describe('handling POST requests', () => {
-    it('should send POST request', function (done) {
-      req = new Request(endpoint + 'endpoint', params);
-      req.then(function (res) {
-        expect(res).to.be.eql({
-          message: {status: "OK"},
-          status: 200
+    before(() => {
+
+      nock("https://track.atom-data.io")
+        .post('/ok')
+        .reply(200, (uri, requestBody) => {
+          let digest = crypto.createHmac('sha256', "YULIE").update(requestBody.data).digest('hex');
+          return {
+            Status: "OK",
+            validAuth: digest,
+            auth: requestBody.auth
+          }
+        })
+
+        .post('/bad-auth')
+        .reply(401, (uri, requestBody) => {
+          return `Auth Error: "${requestBody.stream}"`
+        })
+
+        .post('/no-connection')
+        .replyWithError({code: 'ECONNREFUSED'})
+
+        .post('/unknown-error')
+        .replyWithError("ALL YOUR BASE ARE BELONG TO US")
+
+        .post('/check-headers')
+        .reply(200, function () {
+          return {
+            sdkVersion: this.req.headers.sdkversion,
+            sdkType: this.req.headers.sdktype
+          }
         });
-        done();
-      });
     });
-    it('should handle POST request error', function (done) {
-      req = new Request(endpoint + 'err', params);
-      req.catch(function (err) {
-        expect(err).to.be.eql({
-          message: {error: 'No permission for this table'},
-          status: 401
-        });
-        done();
+
+    it('should send POST request successfully', function*() {
+      let request = new Request({
+        endpoint: config.END_POINT + "ok",
+        sdkType: config.SDK_TYPE,
+        sdkVersion: config.SDK_VERSION,
+        data: {"MOCK": "DATA"},
+        auth: "YULIE",
+        stream: "OK"
       });
+      let response = yield request.post();
+      let responseParsed = JSON.parse(response.message);
+      expect(response.status).to.eql(200);
+      expect(responseParsed.Status).to.eql('OK');
+      expect(responseParsed.auth).to.eql(responseParsed.validAuth);
     });
-  })
+
+    it('should handle POST request auth error', function*() {
+      let request = new Request({
+        endpoint: config.END_POINT + "bad-auth",
+        sdkType: config.SDK_TYPE,
+        sdkVersion: config.SDK_VERSION,
+        data: {"a": 123},
+        auth: "BAD_AUTH",
+        stream: "STREAM_WITH_BAD_AUTH"
+      });
+      try {
+        yield request.post();
+      } catch (error) {
+        expect(error.status).to.eql(401);
+        expect(error.name).to.eql('AtomError');
+        expect(error.message).to.eql(`Auth Error: "STREAM_WITH_BAD_AUTH"`)
+      }
+    });
+
+    it('should handle POST request connection error', function*() {
+      let request = new Request({
+        endpoint: config.END_POINT + "no-connection",
+        sdkType: config.SDK_TYPE,
+        sdkVersion: config.SDK_VERSION,
+        data: {"a": 123},
+        auth: "BAD_AUTH",
+        stream: "CONNECTION_ERROR"
+      });
+      try {
+        yield request.post();
+      } catch (error) {
+        expect(error.message).to.eql('Connection Problem');
+        expect(error.status).to.eql(500);
+        expect(error.name).to.eql('AtomError');
+      }
+    });
+
+    it('should handle POST request unknown error', function*() {
+      let request = new Request({
+        endpoint: config.END_POINT + "unknown-error",
+        sdkType: config.SDK_TYPE,
+        sdkVersion: config.SDK_VERSION,
+        data: {"a": 123},
+        auth: "BAD_AUTH",
+        stream: "UNKNOWN_ERROR"
+      });
+      try {
+        yield request.post();
+      } catch (error) {
+        expect(error.message).to.eql(new Error('ALL YOUR BASE ARE BELONG TO US'));
+        expect(error.status).to.eql(400);
+        expect(error.name).to.eql('AtomError');
+      }
+    });
+
+    it('should validate POST request headers', function*() {
+      let request = new Request({
+        endpoint: config.END_POINT + "check-headers",
+        sdkType: config.SDK_TYPE,
+        sdkVersion: config.SDK_VERSION,
+        data: {"a": 123},
+        auth: "GOOD_AUTH",
+        stream: "OK"
+      });
+      let response = yield request.post();
+      let headers = JSON.parse(response.message);
+      expect(headers.sdkVersion).to.eql(config.SDK_VERSION);
+      expect(headers.sdkType).to.eql(config.SDK_TYPE);
+    });
+
+  });
+
   describe('handling GET requests', () => {
     before(() => {
-      params.method = "GET"
+
+      nock("https://track.atom-data.io")
+        .filteringPath(/\/ok\?data=.+/g, '/?data=GET_TEST')
+        .get('/?data=GET_TEST')
+        .reply(200, function (uri) {
+          let data = uri.split("=")[1];
+          return {Status: "OK", data: data};
+        });
+
+
+      nock("https://track.atom-data.io")
+        .filteringPath(/\/check-headers\?data=.+/g, '/?check-headers=GET_TEST')
+        .get('/?check-headers=GET_TEST')
+        .reply(200, function () {
+          return {
+            sdkVersion: this.req.headers.sdkversion,
+            sdkType: this.req.headers.sdktype
+          }
+        });
+
+      // GET with bad auth
+      nock("https://track.atom-data.io")
+        .filteringPath(/\/bad-auth\?data=.+/g, '/?bad-auth=GET_TEST')
+        .get('/?bad-auth=GET_TEST')
+        .reply(401, (uri) => {
+          uri = decodeURIComponent(uri);
+          let data = uri.split("=")[1];
+          let decodedBase64 = new Buffer(data, 'base64').toString();
+          decodedBase64 = JSON.parse(decodedBase64);
+          return `Auth Error: "${decodedBase64.stream}"`
+        });
+
+      // GET with no connection
+      nock("https://track.atom-data.io")
+        .filteringPath(/\/no-connection\?data=.+/g, '/?no-connection=GET_TEST')
+        .get('/?no-connection=GET_TEST')
+        .replyWithError({code: 'ECONNREFUSED'});
+
+      nock("https://track.atom-data.io")
+        .filteringPath(/\/unknown-error\?data=.+/g, '/?unknown-error=GET_TEST')
+        .get('/?unknown-error=GET_TEST')
+        .replyWithError("ALL YOUR BASE ARE BELONG TO US")
+
     });
-    describe('When the endpoint doesnt return an ferror', () => {
-      before(() => {
-        req = new Request(endpoint + 'endpoint', params);
+
+    it('should send GET request successfully', function*() {
+      let request = new Request({
+        endpoint: config.END_POINT + "ok",
+        sdkType: config.SDK_TYPE,
+        sdkVersion: config.SDK_VERSION,
+        data: {"a": 123},
+        stream: "OK"
       });
-      it('should send GET requests', () => {
-        return req.then( res => {
-          expect(res).to.be.eql({
-            message: {status: "OK"},
-            status: 200
-          });
-        })
-      })
+      let response = yield request.get();
+      let responseMsg = JSON.parse(response.message);
+      expect(response.status).to.eql(200);
+      expect(responseMsg.Status).to.eql("OK");
+      expect(responseMsg.data).to.eql("eyJkYXRhIjoie1wiYVwiOjEyM30iLCJzdHJlYW0iOiJPSyIsImF1dGgiOiIifQ%3D%3D");
     });
-    describe('When the endpoint returns an error code', () => {
-      before(() => {
-        req = new Request(endpoint + 'err', params);
+
+    it('should handle GET request auth error', function*() {
+      let request = new Request({
+        endpoint: config.END_POINT + "bad-auth",
+        sdkType: config.SDK_TYPE,
+        sdkVersion: config.SDK_VERSION,
+        data: {"a": 123},
+        auth: "BAD_AUTH",
+        stream: "STREAM_WITH_BAD_AUTH"
       });
-      it('should handle GET request error', () => {
-        return req.catch(err => {
-          expect(err).to.be.eql({
-            message:{error: "No permission for this table"},
-            status: 401
-          })
-        })
-      })
-    })
+      try {
+        yield request.get();
+      } catch (error) {
+        expect(error.status).to.eql(401);
+        expect(error.name).to.eql('AtomError');
+        expect(error.message).to.eql(`Auth Error: "STREAM_WITH_BAD_AUTH"`)
+      }
+    });
+
+    it('should handle GET request bad connection error', function*() {
+      let request = new Request({
+        endpoint: config.END_POINT + "no-connection",
+        sdkType: config.SDK_TYPE,
+        sdkVersion: config.SDK_VERSION,
+        data: {"a": 123},
+        auth: "BAD_AUTH",
+        stream: "CONNECTION_ERROR"
+      });
+      try {
+        yield request.get();
+      } catch (error) {
+        expect(error.message).to.eql('Connection Problem');
+        expect(error.status).to.eql(500);
+        expect(error.name).to.eql('AtomError');
+      }
+    });
+
+    it('should handle GET request unknown error', function*() {
+      let request = new Request({
+        endpoint: config.END_POINT + "unknown-error",
+        sdkType: config.SDK_TYPE,
+        sdkVersion: config.SDK_VERSION,
+        data: {"a": 123},
+        auth: "BAD_AUTH",
+        stream: "UNKNOWN_ERROR"
+      });
+      try {
+        yield request.get();
+      } catch (error) {
+        expect(error.message).to.eql(new Error('ALL YOUR BASE ARE BELONG TO US'));
+        expect(error.status).to.eql(400);
+        expect(error.name).to.eql('AtomError');
+      }
+    });
+
+    it('should validate GET request headers', function*() {
+      let request = new Request({
+        endpoint: config.END_POINT + "check-headers",
+        sdkType: config.SDK_TYPE,
+        sdkVersion: config.SDK_VERSION,
+        data: {"a": 123},
+        auth: "GOOD_AUTH",
+        stream: "OK"
+      });
+      let response = yield request.get();
+      let headers = JSON.parse(response.message);
+      expect(headers.sdkVersion).to.eql(config.SDK_VERSION);
+      expect(headers.sdkType).to.eql(config.SDK_TYPE);
+    });
   });
-  describe('Testing health endpoint', () => {
-    describe('if endpoint is healthy', () => {
-      before(() => {
-        params = 'health';
-        sinon.spy(Request.prototype, "_fetch");
-        req = new Request(endpoint, params);
+
+  describe('handing GET to /health endpoint', () => {
+    before(() => {
+      nock("https://track.atom-data.io")
+        .get('/health')
+        .reply(200, "up")
+
+      nock("https://bad-track.atom-data.io")
+        .get('/health')
+        .reply(500, "down")
+
+    });
+
+    it('should handle a valid GET health request', function*() {
+      let request = new Request({
+        endpoint: config.END_POINT,
+        sdkType: config.SDK_TYPE,
+        sdkVersion: config.SDK_VERSION,
+        data: {"a": 123},
+        auth: "GOOD_AUTH",
+        stream: "OK"
       });
-      it('should return a resolved promise', () => {
-        expect(req).to.be.fulfilled
-      })
-      it('request should be sent', () => {
-        expect(Request.prototype._fetch).to.be.calledOnce
-      })
-      after(() => {
-        params = {
-          table: "tableName",
-          data: "analyticsData"
-        };
-      })
-    })
-  })
+      let response = yield request.health();
+      expect(response.message).to.eql('Atom API is up');
+      expect(response.status).to.eql(200);
+    });
+
+    it('should handle an error in GET health request', function*() {
+      let request = new Request({
+        endpoint: "https://bad-track.atom-data.io/",
+        sdkType: config.SDK_TYPE,
+        sdkVersion: config.SDK_VERSION
+      });
+      try {
+        yield request.health();
+      } catch (error) {
+        expect(error.message).to.eql('Atom API is down');
+        expect(error.status).to.eql(500);
+        expect(error.name).to.eql('AtomError');
+      }
+    });
+
+  });
+
 });
+
