@@ -1,61 +1,67 @@
 'use strict';
 
+/**
+ * This class implements a Tracker in-memory backlog
+ * @type {LocalStore}
+ */
+
 module.exports = class LocalStore {
   constructor() {
     this.data = {};
   }
 
   /**
-   * registers data in the store for a given key, if it doesn't exist yet it's created
-   * @param key
-   * @param value
-   * @returns {*}
+   * Registers data in the store for a given stream, if it doesn't exist yet it's created
+   * @param {String} stream - Atom stream name
+   * @param {(String|Object)} data - Payload to be sent
+   * @returns {?Array}
    */
-  add(key, value) {
-    if (!this.data[key]) {
-      this.data[key] = [];
+  add(stream, data) {
+    if (!this.data[stream]) {
+      this.data[stream] = [];
     }
-    this.data[key].push(value);
-    return this.get(key);
+    this.data[stream].push(data);
+    return this.get(stream);
   }
 
   /**
-   * returns data for a given key
+   * Returns data for a given stream
    * the difference between get and take is that get leaves data in the store
-   * @param key
-   * @returns {*}
+   * @param {String} stream - Atom stream name
+   * @returns {?Array}
    */
-  get(key) {
-    return this.data[key];
+  get(stream) {
+    return this.data[stream];
   }
 
   /**
-   * will take the value for a given key and empty the value from the store
+   * Will take the value for a given stream and empty the value from the store
    * useful for flushing the data
-   * @param key
-   * @returns {*|Array.<T>}
+   * @param {String} stream - Atom stream name
+   * @throws Will throw an error if stream doesn't exist in storage
+   * @returns {!Array}
    */
-  take(key) {
-    let data = this.get(key);
+  take(stream) {
+    let data = this.get(stream);
     if (!data) {
-      throw new Error(`${key} does not exist in the store`);
+      throw new Error(`${stream} does not exist in the store`);
     }
     return data.splice(0);
   }
 
   /**
-   * indicates whether there's no data for a given key
-   * @param key
-   * @returns {*|boolean}
+   * Indicates whether there's no data for a given stream
+   * @param {String} stream - Atom stream name
+   * @returns {Boolean} true if empty, else false
    */
-  isEmpty(key) {
-    let data = this.get(key);
+  isEmpty(stream) {
+    let data = this.get(stream);
     return !data || data.length <= 0;
   }
 
   /**
-   * returns all keys for the given store
-   * @returns {Array}
+   * Returns all stream names for current storage
+   * @returns {!Array}
    */
   get keys() {
     return Object.keys(this.data);
