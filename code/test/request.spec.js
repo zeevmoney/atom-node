@@ -7,12 +7,11 @@ const config = require('../src/config');
 const crypto = require('crypto');
 chai.use(chaiAsPromised);
 const expect = chai.expect;
-// require('co-mocha');
 const nock = require('nock');
 
 const AtomError = require('../src/lib/utils').AtomError;
 
-describe.only('Request Class', () => {
+describe('Request Class', () => {
 
   describe('Request class initialisation', () => {
     let request;

@@ -88,11 +88,18 @@ module.exports = class Request {
   post() {
     this._createAuth();
 
+    let payload = {
+      stream: this.params.stream,
+      auth: this.params.auth,
+      data: this.params.data,
+      bulk: this.params.bulk
+    };
+
     let options = {
       url: this.params.endpoint,
       headers: this.headers,
       json: true,
-      body: this.params
+      body: payload
     };
 
     return fetchRequest('post', options)
