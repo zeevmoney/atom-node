@@ -53,11 +53,12 @@ function putEventExamples() {
 
   // With co (POST):
   co(function*() {
-    return yield atom.putEvent(params);
-  }).then(function (res) {
-    console.log(`[Example PutEvent POST] success: ${res.message} ${res.status}`);
-  }, function (err) {
-    console.log(`[Example PutEvent POST] failure: ${err.message} ${err.status}`);
+    try {
+      let res = yield atom.putEvent(params);
+      console.log(`[Example PutEvent POST] success: ${res.message} ${res.status}`);
+    } catch (err) {
+      console.log(`[Example PutEvent POST] failure: ${err.message} ${err.status}`);
+    }
   });
 
   // With co & GET method:
