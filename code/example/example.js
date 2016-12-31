@@ -103,7 +103,7 @@ function putEventsExample() {
     data: [],
   };
 
-  atom.options.endpoint = "https://track.atom-data.io";
+  atom.options.endpoint = "https://track.atom-data.io/";
 
   for (let i = 0; i < 10; i++) {
     let number = Math.random() * (3000 - 3) + 3;
