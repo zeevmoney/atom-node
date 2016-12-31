@@ -90,6 +90,7 @@ function putEventExamples() {
 }
 
 function healthExample() {
+  atom.options.endpoint = "https://track.atom-data.io/";
   atom.health().then(function (res) {
     console.log(`[Example Health Check] success: ${res.message} ${res.status}`);
   }, function (err) {
@@ -130,7 +131,8 @@ function trackerExample() {
   const params = {
     endpoint: "https://track.atom-data.io/",
     auth: "",
-    flushInterval: 10, // Flushing interval in seconds
+    debug: true,
+    flushInterval: 3, // Flushing interval in seconds
     bulkLen: 9, // Max count for events for send
     bulkSize: 64 // Max size of data for send in Kb
   };
