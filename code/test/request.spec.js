@@ -1,19 +1,20 @@
 'use strict';
 
+const config = require('../src/config');
+const crypto = require('crypto');
 const Request = require('../src/lib/request.class');
 const chai = require('chai');
 const chaiAsPromised = require("chai-as-promised");
-const config = require('../src/config');
-const crypto = require('crypto');
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 const nock = require('nock');
+require('co-mocha');
 
 const AtomError = require('../src/lib/utils').AtomError;
 
 describe('Request Class', () => {
 
-  describe('Request class initialisation', () => {
+  describe('Request class Initialization', () => {
     let request;
     let testFunction;
 
@@ -84,6 +85,9 @@ describe('Request Class', () => {
             sdkType: this.req.headers.sdktype
           }
         });
+    });
+    after(() => {
+      nock.cleanAll()
     });
 
     it('should send POST request successfully', function*() {
@@ -219,6 +223,10 @@ describe('Request Class', () => {
         .replyWithError("ALL YOUR BASE ARE BELONG TO US")
 
     });
+    after(() => {
+      nock.cleanAll()
+    });
+
 
     it('should send GET request successfully', function*() {
       let request = new Request({
@@ -309,13 +317,17 @@ describe('Request Class', () => {
     before(() => {
       nock("https://track.atom-data.io")
         .get('/health')
-        .reply(200, "up")
+        .reply(200, "up");
 
       nock("https://bad-track.atom-data.io")
         .get('/health')
-        .reply(500, "down")
+        .reply(500, "down");
 
     });
+    after(() => {
+      nock.cleanAll()
+    });
+
 
     it('should handle a valid GET health request', function*() {
       let request = new Request({
