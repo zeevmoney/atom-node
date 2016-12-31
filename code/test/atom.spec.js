@@ -1,17 +1,18 @@
 'use strict';
 
+const config = require('../src/config');
 const Request = require('../src/lib/request.class');
 const Atom = require('../src').ISAtom;
 const chai = require("chai");
 const chaiAsPromised = require("chai-as-promised");
 chai.use(chaiAsPromised);
-const config = require('../src/config');
 const expect = chai.expect;
 const sinon = require('sinon');
 const Promise = require('bluebird');
+require('co-mocha');
 
 describe('Atom Class', () => {
-  describe('Atom class initialisation', () => {
+  describe('Atom class Initialization', () => {
     it('should generate new Atom object with default values', function*() {
       let atom = new Atom();
       expect(atom.options).to.eql({
@@ -36,7 +37,7 @@ describe('Atom Class', () => {
     });
   });
 
-  describe('putEvent, putEvents parameters generation', () => {
+  describe('Atom class methods parameter generation', () => {
     before(() => {
       sinon.stub(Request.prototype, "get", function () {
         return Promise.resolve(this.params);
