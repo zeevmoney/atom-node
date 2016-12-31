@@ -1,6 +1,7 @@
 "use strict";
 // Simple logger, you can replace it with bunyan or anything else...
-let enabled = true;
+const config = require('../config');
+let enabled = config.DEBUG;
 module.exports = {
   error: function () {
     console.error.apply(this, arguments);
