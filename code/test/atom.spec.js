@@ -48,6 +48,7 @@ describe('Atom Class', () => {
       });
 
       sinon.stub(Request.prototype, "health", function () {
+        this.params.endpoint += 'health';
         return Promise.resolve(this.params)
       });
     });

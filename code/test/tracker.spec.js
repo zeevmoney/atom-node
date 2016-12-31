@@ -137,7 +137,7 @@ describe('Tracker Class', function () {
     });
   });
 
-  describe('send and retry mechanism', function () {
+  describe('Tracker send and retry mechanism', function () {
     beforeEach(() => {
       let callCount = 1;
       sinon.stub(Atom.prototype, 'putEvents', function (data) {
