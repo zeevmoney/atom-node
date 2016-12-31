@@ -49,6 +49,7 @@ module.exports = class Tracker {
     this.params.flushInterval = !!params.flushInterval ? params.flushInterval * 1000 : config.FLUSH_INTERVAL;
     this.params.bulkLen = !!params.bulkLen ? params.bulkLen : config.BULK_LENGTH;
     this.params.bulkSize = !!params.bulkSize ? params.bulkSize * 1024 : config.BULK_SIZE;
+    /* istanbul ignore next */
     this.params.onError = params.onError || function (err) {
         self.logger.error(`[${TAG}] Message: ${err.message}, status: ${err.status}`)
       };
@@ -100,6 +101,7 @@ module.exports = class Tracker {
       this.logger.info(`[${TAG}] Triggered flush due to process exit`);
       this.flush();
       setTimeout(() => {
+        /* istanbul ignore next */
         process.exit(0);
       }, 3000)
     }
@@ -210,6 +212,7 @@ module.exports = class Tracker {
           if (err.status >= 500) {
             retry(err)
           } else {
+            /* istanbul ignore next */
             throw err;
           }
         });

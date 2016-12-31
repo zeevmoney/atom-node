@@ -44,6 +44,7 @@ module.exports = class LocalStore {
   take(stream) {
     let data = this.get(stream);
     if (!data) {
+      /* istanbul ignore next */
       throw new Error(`${stream} does not exist in the store`);
     }
     return data.splice(0);

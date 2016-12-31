@@ -2,6 +2,7 @@
 // Simple logger, you can replace it with bunyan or anything else...
 const config = require('../config');
 let enabled = config.DEBUG;
+/* istanbul ignore next */
 module.exports = {
   error: function () {
     console.error.apply(this, arguments);
