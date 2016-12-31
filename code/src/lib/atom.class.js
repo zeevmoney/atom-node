@@ -135,7 +135,7 @@ module.exports = class IronSourceAtom {
 
   health() {
     let params = {
-      endpoint: this.options.endpoint + 'health',
+      endpoint: this.options.endpoint,
       apiVersion: this.options.apiVersion,
       sdkVersion: this.options.sdkVersion,
       sdkType: this.options.sdkType

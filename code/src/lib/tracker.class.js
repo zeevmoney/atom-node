@@ -27,7 +27,7 @@ module.exports = class Tracker {
    * @param {Number} [params.retryOptions.factor=2] - The exponential factor to use.
    * @param {Number} [params.retryOptions.minTimeout=1 second] - The number of milliseconds before starting the first retry.
    * @param {Number} [params.retryOptions.maxTimeout=25 minutes] - The maximum number of milliseconds between two retries.
-   * @param {Boolean} [params.debug=true] - Enabled/Disable debug printing
+   * @param {Boolean} [params.debug=false] - Enabled/Disable debug printing
    * Optional for Atom main object:
    * @param {String} [params.endpoint] - Endpoint api url
    * @param {String} [params.auth] - Key for hmac authentication
@@ -97,8 +97,11 @@ module.exports = class Tracker {
     // Prevent multiple exit handlers to be called
     if (!this.exitHandled) {
       this.exitHandled = true;
-      this.logger.trace(`[${TAG}] Triggered flush due to process exit`);
+      this.logger.info(`[${TAG}] Triggered flush due to process exit`);
       this.flush();
+      setTimeout(() => {
+        process.exit(0);
+      }, 3000)
     }
   }
 
