@@ -1,57 +1,53 @@
-# ironSource.atom SDK for JavaScript
+# ironSource.atom SDK for Node
 [![License][license-image]][license-url]
 [![Docs][docs-image]][docs-url]
+[![Coverage Status][coveralls-image]][coveralls-url]
 [![Build status][travis-image]][travis-url]
-[![Coveralls][coveralls-image]][coveralls-url]
 
-atom-nodeJs is the official [ironSource.atom](http://www.ironsrc.com/data-flow-management) SDK for the NodeJS programming language.
+atom-node is the official [ironSource.atom](http://www.ironsrc.com/data-flow-management) SDK for Node.JS Javascript runtime
 
 - [Signup](https://atom.ironsrc.com/#/signup)
 - [Documentation](https://ironsource.github.io/atom-node/)
-- [Installation](#Installation)
-- [Sending an event](#Using-the-API-layer-to-send-events)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Change Log](#change-log)
+- [Example](#example)
 
-#### Installation
+## Installation
+
+### Installation using npm
 ```sh
-$ npm install --save atom-node
-```
-##### Add script file
-```js
-// ...
-const AtomTracker = require('atom-node').Tracker;
+$ npm install --save
 ```
 
 ## Usage
+
 ### High Level API - "Tracker"
 The tracker is used for sending events to Atom based on several conditions
 - Every 10 seconds (default)
 - Number of accumulated events has reached 10000 (default)
 - Size of accumulated events has reached 64Kb (default)
 ```js
+const AtomTracker = require('atom-node').Tracker;
 const params = {
   endpoint: "https://track.atom-data.io/",
   auth: "YOUR_API_KEY",
-  flushInterval: 10, // Flusing interval in seconds
-  bulkLen: 10000, // Max count for events to send
-  bulkSize: 64 // Max size of data in Kb
+  flushInterval: 10, // Optional, Flushing interval in seconds
+  bulkLen: 1000, // Optional, Max count for events to send
+  bulkSize: 64, // Optional, Max size of data in Kb
   onError: (data) => {
-    console.log(`failed sending ${data}`); // Will be called if max retries fail.
+    console.log(`failed sending ${data}`); // Optional,  Will be called after max retries fail.
   }
 }
-
 let tracker = new AtomTracker(params);
 let payload = {"id": 123, "strings": "abcd"};
-
-tracker.track("STREAM NAME", payload);
-
-// for send event immediately use
-tracker.flush();
+tracker.track("STREAM NAME", payload); // Track an event
+tracker.flush(); // Flush immediately
 ```
 
 ### Low Level API
 ```js
 const AtomReporter = require('atom-node').ISAtom;
-
 const options = {
   endpoint: "https://track.atom-data.io/",
   auth: "YOUR_API_KEY"
@@ -60,8 +56,8 @@ const options = {
 let atom = new AtomReporter(options);
 
 let params = {
-  stream: "STREAM_NAME", //your target stream name
-  data: JSON.stringify({name: "iron", last_name: "Source"}), //String with any data and any structure.
+  stream: "STREAM_NAME", // Your target stream name
+  data: JSON.stringify({name: "iron", last_name: "Source"}), // Json / Stringified Json
 }
 
 atom.putEvent(params).then(function(response){
@@ -70,23 +66,50 @@ atom.putEvent(params).then(function(response){
   console.log(reject);
 });
 
-// or
+// OR
 
 let params = {
-  stream: "STREAM_NAME", // your target stream name
+  stream: "STREAM_NAME", // Your target stream name
   data: [{name: "iron", last_name: "Beast"},
-         {name: "iron2", last_name: "Beast2"}], // Array with any data and any structure.
+         {name: "iron2", last_name: "Beast2"}], // Array with Json / Stringified Json
 }
-
 atom.putEvents(params); // for send bulk of events
 ```
 
+todo: explain about logger and localstore
+
+## Change Log
+
+### v1.5.0
+- Added an option to add a callback on error (after max retries reached)
+- Updated coverage
+- Updated README
+- Updated docs and changed them from apiDoc to JSDoc
+- Fixed a bug with headers not being sent
+- Refactored Request class
+
+### v1.2.0
+- Fixed tracker retry bug - caused by mutating an object that was passed by reference
+- increased test coverage
+- Updated README.MD
+
+### v1.1.2
+- Fixed tests and removed unused dependencies
+- Updated tests to run on LTS
+
+### v1.1.0
+- Added tracker
+- Added Backoff mechanism
+
+### v1.0.0
+- Basic features: putEvent & putEvents functionalities
+
 ### Example
 
-You can use our [example][example-url] for sending data to Atom:
+You can use our [example][example-url] for sending data to Atom.
 
-### License
-MIT
+## License
+[MIT](LICENSE)
 
 [example-url]: https://github.com/ironSource/atom-node/blob/master/code/example/example.js
 [license-image]: https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square
