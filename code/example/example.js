@@ -9,7 +9,7 @@ const util = require('util');
 const program = require('commander');
 
 let atom = new ISAtom({
-  auth: "I40iwPPOsG3dfWX30labriCg9HqMfL"
+  auth: "YOUR AUTH KEY",
   // endpoint: 'http://127.0.0.1:3000/'
 });
 
@@ -42,7 +42,7 @@ function runAllExamples() {
 function putEventExamples() {
 
   let params = {
-    stream: "sdkdev_sdkdev.public.zeev",
+    stream: "ibtest",
     data: {
       strings: "hi",
       ints: 123,
@@ -64,11 +64,12 @@ function putEventExamples() {
   // With co & GET method:
   params.method = 'GET';
   co(function*() {
-    return yield atom.putEvent(params);
-  }).then(function (res) {
-    console.log(`[Example PutEvent GET] success: ${res.message} ${res.status}`);
-  }, function (err) {
-    console.log(`[Example PutEvent GET] failure: ${err.message} ${err.status}`);
+    try {
+      let res = yield atom.putEvent(params);
+      console.log(`[Example PutEvent GET] success: ${res.message} ${res.status}`);
+    } catch (err) {
+      console.log(`[Example PutEvent GET] failure: ${err.message} ${err.status}`);
+    }
   });
 
   // With promises & bad auth
@@ -131,6 +132,7 @@ function putEventsExample() {
 function trackerExample() {
   const params = {
     endpoint: "https://track.atom-data.io/",
+    // endpoint: 'http://127.0.0.1:3000/',
     auth: "",
     debug: true,
     flushInterval: 3, // Flushing interval in seconds
@@ -149,11 +151,15 @@ function trackerExample() {
       ts: new Date(),
       batch: true
     };
-    tracker.track("ibtest", data);
+    tracker.track("ibtest", data).then(function (data) {
+      typeof data[0] !== 'undefined' ? console.log("[TRACKER EXAMPLE] Example tracker results:", data) : null;
+    });
   }
-  console.log(`Sending 10 events to Atom`);
+  console.log(`[TRACKER EXAMPLE] Sending 10 events to Atom`);
 
 // for sending events immediately use
-//  tracker.flush();
+//   tracker.flush().then((data) => {
+//     typeof data[0] !== 'undefined' ? console.log("[TRACKER EXAMPLE] Example tracker results:", data) : null;
+//   });
 
 }
