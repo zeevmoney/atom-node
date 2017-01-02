@@ -1,134 +1,160 @@
 'use strict';
 
-/*
- * Request Class
- * The purpose of this class is to wrap all requests sent to the atom API
+const config = require('./../config');
+const Promise = require('bluebird');
+const crypto = require('crypto');
+const util = require('util');
+const TAG = 'REQUEST';
+const fetchRequest = require('./utils').fetchRequest;
+const AtomError = require('./utils').AtomError;
+
+/**
+ * The purpose of this class is to wrap all requests sent to the Atom API
  * in order to grantee a unified response syntax (for higher level SDK functions to use)
  * and to format requests according to the api specification.
  * */
 
-const config = require('./../config');
-const Promise = require('bluebird');
-const request = require('request');
-const crypto = require('crypto');
-const logger = require('./logger');
+class Request {
 
-module.exports = class Request {
-  constructor(endpoint, params) {
-    if (params === 'health') {
-      return this.health(endpoint);
+  /**
+   * Handles all requests to ironSource atom
+   * @constructor
+   * @param {Object} params - Request class parameters.
+   * @param {String} params.endpoint - The Atom endpoint we send to.
+   * @param {String} params.sdkType - Atom SDK type header
+   * @param {String} params.sdkVersion - Atom SDK version header
+   * @param {(String|Array|Object)} params.data - Payload that will be delivered to Atom.
+   * @param {String} params.stream - Atom stream name
+   * @param {String} [params.auth] - Atom Stream HMAC auth key
+   * @param {String} [params.method] - HTTP send method
+   */
+
+  constructor(params) {
+    this.params = params || {};
+    this.logger = this.params.logger || config.LOGGER;
+
+    // If we delivered some params and it's not a string we try to stringify it.
+    if ((typeof this.params.data !== 'string' && !(this.params.data instanceof String))) {
+      try {
+        this.params.data = JSON.stringify(this.params.data);
+      } catch (e) {
+        throw new AtomError("data is invalid - can't be stringified", 400);
+      }
     }
-    this.params = params;
-    this.logger = params.logger || logger;
-    return this.params.method == 'GET' ? this.get(endpoint) : this.post(endpoint);
+
+    this.headers = {
+      sdkType: this.params.sdkType,
+      sdkVersion: this.params.sdkVersion
+    };
   };
 
+  /**
+   * Send a GET request to Atom API
+   * @returns {Promise}
+   */
+  get() {
+    this._createAuth();
+    let base64Data = new Buffer(JSON.stringify({
+      data: this.params.data,
+      stream: this.params.stream,
+      auth: this.params.auth
+    })).toString('base64');
 
-  // Bypass a bug when doing promisifyAll on request
-  _fetch(method, options) {
-    return new Promise((resolve, reject) => {
-      request[method](options, (err, res, body) => {
-        if (err) {
-          return reject(err);
-        } else {
-          return resolve([res, body]);
-        }
-      });
-    });
-  }
-
-  get(endpoint) {
-    // Generate the HMAC auth
-    this.params.auth = !!this.params.auth
-      ? crypto.createHmac('sha256', this.params.auth).update(this.params.data).digest('hex')
-      : '';
-
-    // Table will be replaced with Stream in V2 of the api.
-    this.params.table = this.params.stream;
-
-    if (this.params.bulk) {
-      return Promise.reject({message: 'Bad Request, Sending Bulks with GET is not allowed ', status: 400});
-    }
-
-    let payload = {data: new Buffer(JSON.stringify(this.params)).toString('base64')};
     let options = {
-      url: endpoint,
+      url: this.params.endpoint,
       headers: this.headers,
       json: true,
-      qs: payload
+      qs: {
+        data: base64Data
+      }
     };
-    return this._fetch('get', options)
-      .spread(function (response, body) {
-        let out = {message: body, status: response.statusCode};
-        if (response.statusCode >= 400) {
-          throw out;
+
+    return fetchRequest('get', options)
+      .spread((response, body) => {
+        if (response.statusCode == 200) {
+          return Promise.resolve({message: JSON.stringify(body), status: response.statusCode});
+        } else if (response.statusCode >= 400 && response.statusCode < 600) {
+          throw new AtomError(body, response.statusCode);
         }
-        return out;
-      })
-      .catch(function (err) {
-        if (err.status >= 400) {
-          return Promise.reject(err);
-        }
-        logger.error(err);
-        return Promise.reject({message: 'Connection Problem', status: 400});
-      });
+      }).catch((error) => Request._errorHandler(error));
   }
 
+  /**
+   * Send a POST request to Atom API
+   * @returns {Promise}
+   */
+  post() {
+    this._createAuth();
 
-  post(endpoint) {
+    let payload = {
+      stream: this.params.stream,
+      auth: this.params.auth,
+      data: this.params.data,
+      bulk: this.params.bulk
+    };
 
-    // Generate the HMAC auth
-    this.params.auth = !!this.params.auth
-      ? crypto.createHmac('sha256', this.params.auth).update(this.params.data).digest('hex')
-      : '';
-
-    // Table will be replace with stream in V2 of the api.
-    this.params.table = this.params.stream;
     let options = {
-      url: this.params.bulk ? endpoint + "/bulk" : endpoint,
+      url: this.params.endpoint,
       headers: this.headers,
       json: true,
-      body: this.params
+      body: payload
     };
-    return this._fetch('post', options)
-      .spread(function (response, body) {
-        let out = {message: body, status: response.statusCode};
-        if (response.statusCode >= 400) {
-          throw out;
+
+    return fetchRequest('post', options)
+      .spread((response, body) => {
+        if (response.statusCode == 200) {
+          return Promise.resolve({message: JSON.stringify(body), status: response.statusCode});
+        } else if (response.statusCode >= 400 && response.statusCode < 600) {
+          throw new AtomError(body, response.statusCode);
         }
-        return out;
-      })
-      .catch(function (err) {
-        if (err.status >= 400) {
-          return Promise.reject(err);
-        }
-        logger.error(err);
-        return Promise.reject({message: 'Connection Problem', status: 500});
-      });
+      }).catch((error) => Request._errorHandler(error));
   }
 
-  health(endpoint) {
-    if (endpoint.slice(-1) == '/') {
-      endpoint=endpoint.slice(0, -1)
-    }
+  /**
+   * Perform a health check on Atom API
+   * @returns {Promise}
+   */
+  health() {
     let options = {
-      url: endpoint + '/health',
+      url: this.params.endpoint + 'health',
       headers: this.headers,
       json: true
     };
-    return this._fetch('get', options)
-      .spread(function (response, body) {
-
-        if (response.statusCode >= 400) {
-          return Promise.reject({message: "Atom API is down", status: response.statusCode});
+    return fetchRequest('get', options)
+      .spread((response, body) => {
+        if (response.statusCode == 200) {
+          return Promise.resolve({message: "Atom API is up", status: response.statusCode});
         }
-        return Promise.resolve({message: "Atom API is up", status: response.statusCode});
-      })
-      .catch(function (err) {
-        if (err.status >= 400) {
-          return Promise.reject(err)
-        }
-        return Promise.reject({message: 'Connection Problem', status: 400});
-      });
+        throw new AtomError("Atom API is down", response.statusCode);
+      }).catch((error) => Request._errorHandler(error));
   }
-};
+
+  /**
+   * Handles the errors of all HTTP functions
+   * @param error
+   * @returns {Promise.<*>}
+   * @private
+   */
+  static _errorHandler(error) {
+    if (error.name == 'AtomError') {
+      return Promise.reject(error);
+    }
+    if (error.code === 'ECONNREFUSED') {
+      return Promise.reject(new AtomError(`Connection Problem`, 500));
+    }
+    return Promise.reject(new AtomError(error, 400));
+  }
+
+  /**
+   * Create auth for stream
+   * @private
+   */
+  _createAuth() {
+    this.params.auth = !!this.params.auth
+      ? crypto.createHmac('sha256', this.params.auth).update(this.params.data).digest('hex')
+      : '';
+  }
+
+}
+
+module.exports = Request;

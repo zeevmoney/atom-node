@@ -1,15 +1,17 @@
-#!/usr/bin/env bash
-
+#!/bin/bash -x
+# Small script to auto-deploy docs to gh-pages branch
 set -e # Exit with nonzero exit code if anything fails
 
 SOURCE_BRANCH="master"
 TARGET_BRANCH="gh-pages"
 
-rm -rf apidoc/
-git clone -b $TARGET_BRANCH --single-branch https://github.com/ironSource/atom-node.git apidoc
-apidoc -i src/ -o apidoc/
-cd apidoc
+rm -rf out
+git clone -b ${TARGET_BRANCH} --single-branch https://github.com/ironSource/atom-node.git out
+rm -rf out/*
+./node_modules/.bin/jsdoc -c jsDoc.json
+cd out
 git add .
-git commit -m "Deploy to GitHub Pages"
+git commit -m "Deployed to GitHub Pages"
 git push
-rm -rf apidoc/
+cd ..
+rm -rf out

@@ -5,10 +5,12 @@
 const ISAtom = require('../src').ISAtom;
 const Tracker = require('../src').Tracker;
 const co = require('co');
+const util = require('util');
 const program = require('commander');
 
 let atom = new ISAtom({
-  auth: "I40iwPPOsG3dfWX30labriCg9HqMfL"
+  auth: "YOUR AUTH KEY",
+  // endpoint: 'http://127.0.0.1:3000/'
 });
 
 program
@@ -39,68 +41,72 @@ function runAllExamples() {
 
 function putEventExamples() {
 
-  let data = {
-    stream: "test",
-    data: JSON.stringify({
+  let params = {
+    stream: "ibtest",
+    data: {
       strings: "hi",
       ints: 123,
       floats: 24.5,
       ts: new Date()
-    })
+    }
   };
 
-  // With co:
-  co(function* () {
-    return yield atom.putEvent(data);
-  }).then(function (res) {
-    console.log('PutEvent POST success:', res);
-  }, function (err) {
-    console.log('PutEvent POST failure:', err);
+  // With co (POST):
+  co(function*() {
+    try {
+      let res = yield atom.putEvent(params);
+      console.log(`[Example PutEvent POST] success: ${res.message} ${res.status}`);
+    } catch (err) {
+      console.log(`[Example PutEvent POST] failure: ${err.message} ${err.status}`);
+    }
   });
-
 
   // With co & GET method:
-  data.method = 'GET';
-  co(function* () {
-    return yield atom.putEvent(data);
-  }).then(function (res) {
-    console.log('PutEvent GET success:', res);
-  }, function (err) {
-    console.log('PutEvent GET failure:', err);
+  params.method = 'GET';
+  co(function*() {
+    try {
+      let res = yield atom.putEvent(params);
+      console.log(`[Example PutEvent GET] success: ${res.message} ${res.status}`);
+    } catch (err) {
+      console.log(`[Example PutEvent GET] failure: ${err.message} ${err.status}`);
+    }
   });
 
-
   // With promises & bad auth
-  atom.auth = 'bad_auth';
-  atom.putEvent(data).then(function (res) {
-    console.log('PutEvent POST success:', res);
+  atom.options.auth = 'bad_auth';
+  params.method = 'POST';
+  atom.putEvent(params).then(function (res) {
+    console.log(`[Example PutEvent POST] success: ${res.message} ${res.status}`);
   }).catch(function (err) {
-    console.log('PutEvent POST failure:', err);
+    console.log(`[Example PutEvent POST] failure: ${err.message} ${err.status}`);
   });
 
   // With bad endpoint
-  atom.endpoint = 'http://127.0.0.1';
-  atom.putEvent(data).then(function (res) {
-    console.log('PutEvent POST success:', res);
+  atom.options.endpoint = 'https://bad-end-point';
+  atom.putEvent(params).then(function (res) {
+    console.log(`[Example PutEvent POST] success: ${res.message} ${res.status}`);
   }).catch(function (err) {
-    console.log('PutEvent POST failure:', err);
+    console.log(`[Example PutEvent POST] failure: ${err.message} ${err.status}`);
   });
 
 }
 
 function healthExample() {
+  atom.options.endpoint = "https://track.atom-data.io/";
   atom.health().then(function (res) {
-    console.log('Health check success:', res);
+    console.log(`[Example Health Check] success: ${res.message} ${res.status}`);
   }, function (err) {
-    console.log('Health check failure:', err);
+    console.log(`[Example Health Check] failure: ${err.message} ${err.status}`);
   });
 }
 
 function putEventsExample() {
-  let bulk = {
-    stream: "test",
-    data: []
+  let batchPayload = {
+    stream: "ibtest",
+    data: [],
   };
+
+  atom.options.endpoint = "https://track.atom-data.io/";
 
   for (let i = 0; i < 10; i++) {
     let number = Math.random() * (3000 - 3) + 3;
@@ -111,23 +117,25 @@ function putEventsExample() {
       ts: new Date(),
       batch: true
     };
-    bulk.data.push(data);
+    batchPayload.data.push(data);
   }
 
-  console.log(`Sending ${bulk.data.length} events to Atom`);
+  console.log(`[Example PutEvents] Sending ${batchPayload.data.length} events to Atom`);
 
-  atom.putEvents(bulk).then(function (res) {
-    console.log('PutEvents success:', res);
-  }).catch(function (err) {
-    console.log('PutEvents error:', err);
+  atom.putEvents(batchPayload).then(function (res) {
+    console.log(`[Example PutEvents POST] success: ${res.message} ${res.status}`);
+  }, function (err) {
+    console.log(`[Example PutEvents POST] failure: ${err.message} ${err.status}`);
   });
 }
 
 function trackerExample() {
   const params = {
     endpoint: "https://track.atom-data.io/",
+    // endpoint: 'http://127.0.0.1:3000/',
     auth: "",
-    flushInterval: 10, // Flushing interval in seconds
+    debug: true,
+    flushInterval: 3, // Flushing interval in seconds
     bulkLen: 9, // Max count for events for send
     bulkSize: 64 // Max size of data for send in Kb
   };
@@ -143,11 +151,15 @@ function trackerExample() {
       ts: new Date(),
       batch: true
     };
-    tracker.track("test", data);
+    tracker.track("ibtest", data).then(function (data) {
+      typeof data[0] !== 'undefined' ? console.log("[TRACKER EXAMPLE] Example tracker results:", data) : null;
+    });
   }
-  console.log(`Sending 10 events to Atom`);
+  console.log(`[TRACKER EXAMPLE] Sending 10 events to Atom`);
 
 // for sending events immediately use
-//  tracker.flush();
+//   tracker.flush().then((data) => {
+//     typeof data[0] !== 'undefined' ? console.log("[TRACKER EXAMPLE] Example tracker results:", data) : null;
+//   });
 
 }
