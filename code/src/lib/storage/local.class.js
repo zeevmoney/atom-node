@@ -5,7 +5,7 @@
  * @type {LocalStore}
  */
 
-module.exports = class LocalStore {
+class LocalStore {
   constructor() {
     this.data = {};
   }
@@ -67,4 +67,6 @@ module.exports = class LocalStore {
   get keys() {
     return Object.keys(this.data);
   }
-};
+}
+
+module.exports = LocalStore;

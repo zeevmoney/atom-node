@@ -8,9 +8,8 @@ const Atom = require('./atom.class');
 const LocalStore = require('./storage/local.class');
 const TAG = 'TRACKER';
 
-module.exports = class Tracker {
+class Tracker {
   /**
-   *
    * This class implements a tracker for tracking events to ironSource atom
    * @param {Object} params
    * @param {Number} [params.flushInterval=10 seconds] - Data sending interval (in seconds)
@@ -51,7 +50,7 @@ module.exports = class Tracker {
     this.params.bulkSize = !!params.bulkSize ? params.bulkSize * 1024 : config.BULK_SIZE;
     /* istanbul ignore next */
     this.params.onError = params.onError || function (err) {
-        self.logger.error(`[${TAG}] Message: ${err.message}, status: ${err.status}`)
+        self.logger.error(`[${TAG}] onError message: ${err.message}, status: ${err.status}`);
       };
     this.params.flushOnExit = typeof params.flushOnExit !== 'undefined' ? params.flushOnExit : true;
 
@@ -81,7 +80,7 @@ module.exports = class Tracker {
     }
 
     /**
-     * will process streams and determine whether they should be flushed each 100 milliseconds
+     * Will process streams and determine whether they should be flushed each 100 milliseconds
      * @type {any}
      */
     setInterval(() => {
@@ -99,7 +98,7 @@ module.exports = class Tracker {
     if (!this.exitHandled) {
       this.exitHandled = true;
       this.logger.info(`[${TAG}] Triggered flush due to process exit`);
-      this.flush();
+      this._process();
       setTimeout(() => {
         /* istanbul ignore next */
         process.exit(0);
@@ -146,7 +145,29 @@ module.exports = class Tracker {
       );
   }
 
-  // todo: add doc
+  /**
+   * Track data to Atom, this function returns a promise with array of server responses.
+   * Case of error it will not reject the Promise, instead it will call the Tracker onError func (can be changed)
+   * @param stream - Atom stream name
+   * @param data - Data to track
+   * @returns {*|Array|Promise}
+   * @example Tracker Example
+   *
+   * const AtomTracker = require('atom-node').Tracker;
+   * var params = {
+   *    auth: "YOUR_HMAC_AUTH_KEY", // Optional, depends on your stream config
+   *    flushInterval: 10, // Optional, Tracker flush interval in seconds
+   *    bulkLen: 50, // Optional, Number of events per bulk (batch)
+   *    bulkSize: 20 // Optional, Size of each bulk in KB
+   * }
+   * let tracker = new AtomTracker(params);
+   * var stream = "MY_STREAM_NAME", // Your target stream name
+   * var data = {id: 1, string_col: "String"} // Data that matches your DB structure
+   * tracker.track(stream, data); // Start tracking and empty on the described above conditions
+   * tracker.track(stream, data).then(function (data) {
+   *   console.log("[TRACKER EXAMPLE] Example tracker results:", data);
+   * });
+   */
   track(stream, data) {
     if (stream === undefined || stream.length == 0 || data === undefined || data.length == 0) {
       throw new Error('Stream name and data are required parameters');
@@ -162,21 +183,40 @@ module.exports = class Tracker {
 
   /**
    * Process all streams and flush if necessary
+   * @param forceFlush - force flush all streams
    * @returns {*|Array|Promise}
    * @private
    */
-  _process() {
+  _process(forceFlush) {
     return Promise.map(this.backlog.keys, (stream) => {
-      if (this._shouldFlush(stream)) {
+      if (this._shouldFlush(stream) || forceFlush && !this.backlog.isEmpty(stream)) {
         this.streamTimers[stream] = Tracker._getTimestamp();
-        return this.flush(stream);
+        return this._send(stream, this.backlog.take(stream));
       }
     }, {concurrency: this.params.concurrency});
   }
 
   /**
-   * Flush data to atom
-   * @param batchStream
+   * Flush data to Atom, this function returns a promise with array of server responses.
+   * Case of error it will not reject the Promise, instead it will call the Tracker onError func (you can reject there)
+   * @param [batchStream]
+   * @returns Promise
+   * @example Flush Example
+   *
+   * const AtomTracker = require('atom-node').Tracker;
+   * let tracker = new Tracker(params);
+   *
+   * // Flush all data
+   * tracker.flush()
+   *
+   * // Flush all data and get array of results
+   * tracker.flush().then((data) => {
+   *    console.log("[TRACKER EXAMPLE] Example tracker results:", data);
+   * });
+   *
+   * // Flush a specific stream:
+   * tracker.flush("MY_EPIC_STREAM");
+   });
    */
   flush(batchStream) {
     // Flush a particular stream
@@ -187,16 +227,15 @@ module.exports = class Tracker {
       }
     } else {
       // Send everything when no params were given
-      for (let stream of this.backlog.keys) {
-        this.flush(stream);
-      }
+      return this._process(true);
     }
   }
 
   /**
-   * Sends events to Atom using the low level Atom Class, handles retries and calls a callback on error
-   * @param stream
-   * @param data
+   * Sends events to Atom using Atom Class, handles retries and calls a callback on error
+   * @param stream - Atom Stream Name
+   * @param data - Data to track
+   * @returns {*|Promise.<T>}
    * @private
    */
   _send(stream, data) {
@@ -221,4 +260,6 @@ module.exports = class Tracker {
         this.params.onError(err)
       });
   }
-};
+}
+
+module.exports = Tracker;

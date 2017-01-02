@@ -15,7 +15,7 @@ const AtomError = require('./utils').AtomError;
  * and to format requests according to the api specification.
  * */
 
-module.exports = class Request {
+class Request {
 
   /**
    * Handles all requests to ironSource atom
@@ -44,7 +44,6 @@ module.exports = class Request {
     }
 
     this.headers = {
-      // contentType: "application/json;charset=UTF-8", todo: check if needed
       sdkType: this.params.sdkType,
       sdkVersion: this.params.sdkVersion
     };
@@ -131,6 +130,12 @@ module.exports = class Request {
       }).catch((error) => Request._errorHandler(error));
   }
 
+  /**
+   * Handles the errors of all HTTP functions
+   * @param error
+   * @returns {Promise.<*>}
+   * @private
+   */
   static _errorHandler(error) {
     if (error.name == 'AtomError') {
       return Promise.reject(error);
@@ -141,10 +146,16 @@ module.exports = class Request {
     return Promise.reject(new AtomError(error, 400));
   }
 
+  /**
+   * Create auth for stream
+   * @private
+   */
   _createAuth() {
     this.params.auth = !!this.params.auth
       ? crypto.createHmac('sha256', this.params.auth).update(this.params.data).digest('hex')
       : '';
   }
 
-};
+}
+
+module.exports = Request;

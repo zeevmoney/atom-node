@@ -5,14 +5,13 @@ const Request = require('./request.class');
 const Promise = require('bluebird');
 const AtomError = require('./utils').AtomError;
 
-module.exports = class IronSourceAtom {
+class IronSourceAtom {
   /**
-   *
    * Constructs an Atom service object.
    * @constructor
    * @param {Object} [options] - options for Atom class
    * @param {String} [options.endpoint] - Atom API url
-   * @param {String} [options.auth] - Auth key for authentication
+   * @param {String} [options.auth] - Atom stream HMAC auth key
    * @param {String} [options.apiVersion] - Atom API version (shouldn't be changed).
    * @param {String} [options.sdkVersion] - Atom SDK Version (shouldn't be changed).
    * @param {String} [options.sdkType] - Atom SDK Type (shouldn't be changed).
@@ -40,7 +39,6 @@ module.exports = class IronSourceAtom {
    * @param {(String|Object)} params.data - Data to be sent (stringified data or object)
    * @param {String} [params.method=POST] - HTTP method (POST or GET)
    * @param {String} [params.endpoint] - Atom API endpoint
-   * @param {String} [params.auth] - Atom stream HMAC auth key
    * @returns {Promise}
    *
    * @example Request-Example:
@@ -62,8 +60,24 @@ module.exports = class IronSourceAtom {
    * };
    *
    *
-   * atom.putEvent(params)
-   * todo: finish this
+   *  // With co (POST):
+   * co(function*() {
+   *   try {
+   *     let res = yield atom.putEvent(params);
+   *     console.log(`[Example PutEvent POST] success: ${res.message} ${res.status}`);
+   *   } catch (err) {
+   *     console.log(`[Example PutEvent POST] failure: ${err.message} ${err.status}`);
+   *   }
+   * });
+   *
+   *
+   * // With promises
+   * params.method = 'POST';
+   * atom.putEvent(params).then(function (res) {
+   *    console.log(`[Example PutEvent POST] success: ${res.message} ${res.status}`);
+   * }).catch(function (err) {
+   *    console.log(`[Example PutEvent POST] failure: ${err.message} ${err.status}`);
+   * });
    */
 
   putEvent(params) {
@@ -89,14 +103,27 @@ module.exports = class IronSourceAtom {
    *
    * @example Request-Example:
    *
-   * var stream = "MY.ATOM.STREAM";
-   * var data = [
-   * {"event_name":"JS-SDK-PUT-EVENTS-TEST","string_value":"67.217","int_value":67,"float_value":67.21,"ts":"2016-08-14T12:54:55.839Z"},
-   * {"event_name":"JS-SDK-PUT-EVENTS-TEST","string_value":"2046.43","int_value":20,"float_value":2046.43,"ts":"2016-08-14T12:54:55.839Z"];
-   * var atom = new IronSourceAtom();
-   * atom.putEvents({ data: data, stream: stream })
-   * todo: finish this
- */
+   * let batchPayload = {
+   *   stream: "ibtest",
+   *   data: [],
+   * };
+   * for (let i = 0; i < 10; i++) {
+   *   let number = Math.random() * (3000 - 3) + 3;
+   *   let data = {
+   *      strings: String(number),
+   *      ints: Math.round(number),
+   *      floats: number,
+   *      ts: new Date(),
+   *      batch: true
+   *   };
+   *   batchPayload.data.push(data);
+   * }
+   * atom.putEvents(batchPayload).then(function (res) {
+   *   console.log(`[Example PutEvents POST] success: ${res.message} ${res.status}`);
+   * }, function (err) {
+   *   console.log(`[Example PutEvents POST] failure: ${err.message} ${err.status}`);
+   * });
+   */
 
   putEvents(params) {
     params = params || {};
@@ -131,6 +158,12 @@ module.exports = class IronSourceAtom {
   /**
    * Send a /GET health check to the Atom endpoint
    * @returns {Promise}
+   * @ example Health Check Example:
+   * atom.health().then(function (res) {
+   *   console.log(`[Example Health Check] success: ${res.message} ${res.status}`);
+   * }, function (err) {
+   *   console.log(`[Example Health Check] failure: ${err.message} ${err.status}`);
+   * });
    */
 
   health() {
@@ -143,5 +176,6 @@ module.exports = class IronSourceAtom {
     let request = new Request(params);
     return request.health();
   }
+}
 
-};
+module.exports = IronSourceAtom;
