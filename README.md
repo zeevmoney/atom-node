@@ -37,14 +37,27 @@ const params = {
   flushInterval: 10, // Optional, Flushing interval in seconds
   bulkLen: 1000, // Optional, Max count for events to send
   bulkSize: 128, // Optional, Max size of data in Kb
-  onError: (data) => {
-    console.log(`failed sending ${data}`); // Optional, Callback that Will be called after max retries fail.
+  onError: (err) => {
+    console.log(`failed sending, ${err}`); // Optional, Callback that Will be called after max retries fail.
   }
 }
 let tracker = new AtomTracker(params);
 let payload = {"id": 123, "strings": "abcd"};
 tracker.track("STREAM NAME", payload); // Track an event (flush on the described above conditions)
 tracker.flush(); // Flush immediately
+```
+### Tracker onError
+The flush and track methods return a promise (array with positive results - see docs/example)    
+case of failure the onError function will be called, which by default just logs the error to console  
+If you want to handle the error otherwise just overwrite the onError function like this:
+```js
+const AtomTracker = require('atom-node').Tracker;
+const params = {
+  onError: (err) => {
+      return Promise.reject(err);
+  }
+}
+let tracker = new AtomTracker(params);
 ```
 
 ### Tracker Backlog
@@ -142,14 +155,13 @@ atom.putEvents(batchPayload).then(function (res) {
 ### v1.0.0
 - Basic features: putEvent & putEvents functionalities
 
-### Example
-
+## Example
 You can use our [example][example-url] for sending data to Atom.
 
 ## License
 [MIT](LICENSE)
 
-[example-url]: https://github.com/ironSource/atom-node/blob/master/code/example/example.js
+[example-url]: code/example/example.js
 [license-image]: https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square
 [license-url]: LICENSE
 [travis-image]: https://travis-ci.org/ironSource/atom-node.svg?branch=master
