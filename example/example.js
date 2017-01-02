@@ -73,7 +73,7 @@ function putEventExamples() {
   });
 
   // With promises & bad auth
-  atom.options.auth = 'bad_auth';
+  params.stream = 'fake_stream';
   params.method = 'POST';
   atom.putEvent(params).then(function (res) {
     console.log(`[Example PutEvent POST] success: ${res.message} ${res.status}`);

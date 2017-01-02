@@ -18,6 +18,6 @@
   "opts": {
     "template": "templates/default",
     "recurse": true,
-    "readme": "../README.MD"
+    "readme": "README.MD"
   }
 }

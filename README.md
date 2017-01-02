@@ -32,7 +32,7 @@ For a list of all available tracker config options, check the [docs](https://iro
 ```js
 const AtomTracker = require('atom-node').Tracker;
 const params = {
-  endpoint: "https://track.atom-data.io/", // Don't change this (unless you have your own DNS CNAME)
+  endpoint: "https://track.atom-data.io/", // Optional, Don't change this (unless you have your own DNS CNAME)
   auth: "YOUR PRE-SHARED HAMC AUTH KEY", // Can be found in Atom Console
   flushInterval: 10, // Optional, Flushing interval in seconds
   bulkLen: 1000, // Optional, Max count for events to send
@@ -131,6 +131,11 @@ atom.putEvents(batchPayload).then(function (res) {
 
 ## Change Log
 
+### v1.5.1
+- Updated npm package conf
+- Updated readme
+- Changed project directory structure
+
 ### v1.5.0
 - Refactored Request class
 - Refactored Atom class
@@ -163,6 +168,21 @@ atom.putEvents(batchPayload).then(function (res) {
 
 ## Example
 You can use our [example][example-url] for sending data to Atom.
+```bash
+node example/example.js -h
+
+  Usage: example [options]
+
+  Options:
+
+    -h, --help       output usage information
+    -V, --version    output the version number
+    -p, --putevent   Run the putEvent examples
+    -P, --putevents  Run the putEvents examples
+    -H, --health     run the health check example
+    -t, --tracker    run the tracker example
+    -a, --all        Run all of the examples
+```
 
 ## License
 [MIT](LICENSE)
