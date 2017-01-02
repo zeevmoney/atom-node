@@ -4,7 +4,7 @@
   },
   "source": {
     "include": [
-      "atom-sdk/src"
+      "src/lib/"
     ],
     "includePattern": ".+\\.js(doc)?$",
     "excludePattern": "(^|\\/|\\\\)_"
