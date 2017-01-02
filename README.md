@@ -1,9 +1,9 @@
-# ironSource.atom SDK for Node-JS Runtime
+# ironSource.atom SDK for Node-JS
 [![License][license-image]][license-url]
 [![Docs][docs-image]][docs-url]
 [![Coverage Status][coveralls-image]][coveralls-url]
 [![Build status][travis-image]][travis-url]
-
+[![npm version][npm-image]][npm-url]  
 atom-node is the official [ironSource.atom](http://www.ironsrc.com/data-flow-management) SDK for Node.JS Javascript runtime
 
 - [Signup](https://atom.ironsrc.com/#/signup)
@@ -196,3 +196,5 @@ node example/example.js -h
 [coveralls-url]: https://coveralls.io/github/ironSource/atom-node?branch=master
 [docs-image]: https://img.shields.io/badge/docs-latest-blue.svg
 [docs-url]: https://ironsource.github.io/atom-node/
+[npm-image]: https://badge.fury.io/js/atom-node.svg 
+[npm-url]: https://badge.fury.io/js/atom-node
