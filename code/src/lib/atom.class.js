@@ -15,8 +15,8 @@ class IronSourceAtom {
    * @param {String} [options.apiVersion] - Atom API version (shouldn't be changed).
    * @param {String} [options.sdkVersion] - Atom SDK Version (shouldn't be changed).
    * @param {String} [options.sdkType] - Atom SDK Type (shouldn't be changed).
-   * @param {Object} [options.logger] - Alternative Logger (Bunyan or anything else)
-   * @param {Boolean} [options.debug] - Enable / disable debug
+   * @param {Object} [options.logger=console] - Alternative Logger (Bunyan or anything else)
+   * @param {Boolean} [options.debug=false] - Enable / disable debug
    *
    */
   constructor(options) {
@@ -158,7 +158,7 @@ class IronSourceAtom {
   /**
    * Send a /GET health check to the Atom endpoint
    * @returns {Promise}
-   * @ example Health Check Example:
+   * @example Health Check Example:
    * atom.health().then(function (res) {
    *   console.log(`[Example Health Check] success: ${res.message} ${res.status}`);
    * }, function (err) {

@@ -9,7 +9,6 @@ const fetchRequest = require('./utils').fetchRequest;
 const AtomError = require('./utils').AtomError;
 
 /**
- * Request Class
  * The purpose of this class is to wrap all requests sent to the Atom API
  * in order to grantee a unified response syntax (for higher level SDK functions to use)
  * and to format requests according to the api specification.

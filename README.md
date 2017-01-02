@@ -26,9 +26,9 @@ $ npm install --save
 The tracker is used for sending events to Atom based on several conditions
 - Every 10 seconds (default)
 - Number of accumulated events has reached 1000 (default)
-- Size of accumulated events has reached 128Kb (default)
+- Size of accumulated events has reached 128Kb (default)  
 Case of server side failure (500) the tracker uses an exponential back off mechanism with jitter.
-For a list of all available tracker config options, check the docs: <ADD LINK HERE>
+For a list of all available tracker config options, check the [docs](https://ironsource.github.io/atom-node/)
 ```js
 const AtomTracker = require('atom-node').Tracker;
 const params = {
@@ -47,8 +47,8 @@ tracker.track("STREAM NAME", payload); // Track an event (flush on the described
 tracker.flush(); // Flush immediately
 ```
 ### Tracker onError
-The flush and track methods return a promise (array with positive results - see docs/example)    
-case of failure the onError function will be called, which by default just logs the error to console  
+The flush and track methods return a promise (array with positive results - see docs/example).   
+Case of failure the onError function will be called, which by default just logs the error to console  
 If you want to handle the error otherwise just overwrite the onError function like this:
 ```js
 const AtomTracker = require('atom-node').Tracker;
@@ -61,7 +61,7 @@ let tracker = new AtomTracker(params);
 ```
 
 ### Tracker Backlog
-The tracker is using a simple in memory storage for its backlog <ADD LINK HERE>
+The tracker is using a simple in memory storage for its [backlog](https://ironsource.github.io/atom-node/LocalStore.html)  
 You can replace it with a custom backlog using the same interface
 ```js
 const AtomTracker = require('atom-node').Tracker;
@@ -132,12 +132,18 @@ atom.putEvents(batchPayload).then(function (res) {
 ## Change Log
 
 ### v1.5.0
-- Added an option to add a callback on error (after max retries reached)
-- Updated coverage
-- Updated README
-- Updated docs and changed them from apiDoc to JSDoc
-- Fixed a bug with headers not being sent
 - Refactored Request class
+- Refactored Atom class
+- Refactored Tracker
+- Fixed a bug in Tracker exit handler (there was no delay on graceful shutdown)
+- Added an option to add a callback on error (after max retries reached)
+- Changed example
+- Added more options to conf
+- Rewrote all tests and increased coverage
+- Updated README
+- Updated all docs and changed them from apiDoc to JSDoc
+- Fixed a bug with headers not being sent
+- Added AtomError custom Error
 
 ### v1.2.0
 - Fixed tracker retry bug - caused by mutating an object that was passed by reference

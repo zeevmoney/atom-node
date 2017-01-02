@@ -15,7 +15,7 @@ class Tracker {
    * @param {Number} [params.flushInterval=10 seconds] - Data sending interval (in seconds)
    * @param {Number} [params.bulkLen=1000] - Number of records in each bulk request
    * @param {Number} [params.bulkSize=128kb] - The maximum bulk size in KB.
-   * @param {callback} [params.onError=null] - Callback that will be invoked with the failed event if maximum retries fail
+   * @param {callback} [params.onError=See Readme] - Callback that will be invoked with the failed event if maximum retries fail
    * @param {Boolean} [params.flushOnExit=true] - Whether all data should be flushed on application exit
    * @param {Object} [params.logger=console] - Override Logger module
    * @param {Object} [params.backlog=LocalStore] - Backlog module, implementation for the tracker backlog storage
@@ -198,7 +198,7 @@ class Tracker {
 
   /**
    * Flush data to Atom, this function returns a promise with array of server responses.
-   * Case of error it will not reject the Promise, instead it will call the Tracker onError func (you can reject there)
+   * Case of error it will not reject the Promise, instead it will call the Tracker onError func (can be changed)
    * @param [batchStream]
    * @returns Promise
    * @example Flush Example
@@ -216,7 +216,6 @@ class Tracker {
    *
    * // Flush a specific stream:
    * tracker.flush("MY_EPIC_STREAM");
-   });
    */
   flush(batchStream) {
     // Flush a particular stream
