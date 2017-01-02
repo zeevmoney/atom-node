@@ -968,14 +968,15 @@ Optional for Atom main object:</td>
 
     
 
-    <h4 class="name" id="flush"><span class="type-signature"></span>flush<span class="signature">(batchStream)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="flush"><span class="type-signature"></span>flush<span class="signature">(batchStream<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    Flush data to atom
+    Flush data to Atom, this function returns a promise with array of server responses.
+Case of error it will not reject the Promise, instead it will call the Tracker onError func (you can reject there)
 </div>
 
 
@@ -999,6 +1000,8 @@ Optional for Atom main object:</td>
         <th>Type</th>
 
         
+        <th>Attributes</th>
+        
 
         
 
@@ -1018,6 +1021,16 @@ Optional for Atom main object:</td>
             
             </td>
 
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
             
 
             
@@ -1063,7 +1076,7 @@ Optional for Atom main object:</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tracker.class.js.html">tracker.class.js</a>, <a href="tracker.class.js.html#line180">line 180</a>
+        <a href="tracker.class.js.html">tracker.class.js</a>, <a href="tracker.class.js.html#line221">line 221</a>
     </li></ul></dd>
     
 
@@ -1086,6 +1099,225 @@ Optional for Atom main object:</td>
 
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    Promise
+</div>
+
+
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>Flush Example
+
+const AtomTracker = require('atom-node').Tracker;
+let tracker = new Tracker(params);
+
+// Flush all data
+tracker.flush()
+
+// Flush all data and get array of results
+tracker.flush().then((data) => {
+   console.log("[TRACKER EXAMPLE] Example tracker results:", data);
+});
+
+// Flush a specific stream:
+tracker.flush("MY_EPIC_STREAM");
+   });</code></pre>
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="track"><span class="type-signature"></span>track<span class="signature">(stream, data)</span><span class="type-signature"> &rarr; {*|Array|Promise}</span></h4>
+
+    
+
+
+
+<div class="description">
+    Track data to Atom, this function returns a promise with array of server responses.
+Case of error it will not reject the Promise, instead it will call the Tracker onError func (can be changed)
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>stream</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Atom stream name</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>data</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Data to track</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tracker.class.js.html">tracker.class.js</a>, <a href="tracker.class.js.html#line171">line 171</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">*</span>
+|
+
+<span class="param-type">Array</span>
+|
+
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>Tracker Example
+
+const AtomTracker = require('atom-node').Tracker;
+var params = {
+   auth: "YOUR_HMAC_AUTH_KEY", // Optional, depends on your stream config
+   flushInterval: 10, // Optional, Tracker flush interval in seconds
+   bulkLen: 50, // Optional, Number of events per bulk (batch)
+   bulkSize: 20 // Optional, Size of each bulk in KB
+}
+let tracker = new AtomTracker(params);
+var stream = "MY_STREAM_NAME", // Your target stream name
+var data = {id: 1, string_col: "String"} // Data that matches your DB structure
+tracker.track(stream, data); // Start tracking and empty on the described above conditions
+tracker.track(stream, data).then(function (data) {
+  console.log("[TRACKER EXAMPLE] Example tracker results:", data);
+});</code></pre>
 
 
 
@@ -1111,7 +1343,7 @@ Optional for Atom main object:</td>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Sun Jan 01 2017 18:52:45 GMT+0200 (IST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Mon Jan 02 2017 03:08:24 GMT+0200 (IST)
 </footer>
 
 <script> prettyPrint(); </script>
