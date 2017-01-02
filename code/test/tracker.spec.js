@@ -48,11 +48,12 @@ describe('Tracker Class', function () {
   describe('Track method tests', function () {
     beforeEach(() => {
       sinon.stub(Atom.prototype, 'putEvents', function (data) {
-        return Promise.resolve();
+        return Promise.resolve("200");
       });
       sinon.spy(Tracker.prototype, 'track');
       sinon.spy(Tracker.prototype, '_process');
       sinon.spy(Tracker.prototype, 'flush');
+      sinon.spy(Tracker.prototype, '_send');
     });
 
     afterEach(() => {
@@ -60,6 +61,7 @@ describe('Tracker Class', function () {
       Tracker.prototype.flush.restore();
       Tracker.prototype.track.restore();
       Tracker.prototype._process.restore();
+      Tracker.prototype._send.restore();
     });
 
     it('should accumulate data backlog before flush', function*() {
@@ -78,7 +80,7 @@ describe('Tracker Class', function () {
       expect(fn).to.throw('Stream name and data are required parameters');
     });
 
-    it('should flush when each flush interval has been reahed', function*() {
+    it('should flush when each flush interval has been reached', function*() {
       let clock = sinon.useFakeTimers();
       let tracker = new Tracker({
         flushInterval: 10,
@@ -92,11 +94,11 @@ describe('Tracker Class', function () {
         clock.tick(150);
       }
       expect(tracker.track).to.have.callCount(200);
-      expect(tracker.flush).to.have.callCount(2);
+      expect(tracker._send).to.have.callCount(2);
       clock.restore();
     });
 
-    it('should make sure flushes are executed with proper batch size and without duplications', function*() {
+    it('should make sure flushes are executed with proper bulk length and without duplications', function*() {
       let clock = sinon.useFakeTimers();
       let tracker = new Tracker({
         flushInterval: 20000000,
@@ -109,7 +111,7 @@ describe('Tracker Class', function () {
         clock.tick(100);
       }
       expect(tracker.track).to.have.callCount(200);
-      expect(tracker.flush).to.have.callCount(10);
+      expect(tracker._send).to.have.callCount(10);
       clock.restore();
     });
 
@@ -130,11 +132,36 @@ describe('Tracker Class', function () {
         clock.tick(100);
       }
 
+      let exitSpy = sinon.spy(tracker, '_exitHandler');
       process.emit('SIGHUP'); // using SIGHUP instead of SIGINT since SIGINT causes mocha to quit as well
-      expect(tracker.flush).to.be.have.been.called.twice;
+      expect(exitSpy).to.have.callCount(1);
       expect(tracker.track).to.have.callCount(65);
+      exitSpy.restore();
       clock.restore();
     });
+
+    it('should flush everything when flush() has been called', function*() {
+      let tracker = new Tracker({
+        flushInterval: 1000000,
+        bulkLen: 100000,
+        bulkSize: 10000,
+        flushOnExit: false
+      });
+
+      let i = 0;
+      while (i < 100) {
+        i % 2 ? yield tracker.track('stream', {id: i, uuid: uuid.v4()})
+          : yield tracker.track('stream2', {id: i, uuid: uuid.v4()});
+        i++;
+      }
+
+      yield tracker.flush("stream");
+      yield tracker.flush();
+      expect(tracker._send).to.be.have.callCount(2);
+      expect(tracker.backlog.isEmpty('stream')).to.be.true;
+      expect(tracker.backlog.isEmpty('stream2')).to.be.true;
+    });
+
   });
 
   describe('Tracker send and retry mechanism', function () {
