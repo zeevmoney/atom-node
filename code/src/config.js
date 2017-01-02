@@ -1,5 +1,5 @@
 module.exports = {
-  SDK_VERSION: 'V1.2.1',
+  SDK_VERSION: 'V1.5.0',
   API_VERSION: 'V1',
   SDK_TYPE: 'node-js',
   END_POINT: "https://track.atom-data.io/",
