@@ -2,7 +2,7 @@
 
 const co = require('co');
 const Promise = require('bluebird');
-const uuid = require('node-uuid');
+const uuid = require('uuid');
 const chai = require('chai');
 chai.use(require('sinon-chai'));
 const expect = chai.expect;

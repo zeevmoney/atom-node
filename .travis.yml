@@ -3,7 +3,7 @@ node_js:
   - "stable"
   - "4"
 before_install:
-- cd code && npm i
+- npm i
 script:
 - npm test
 after_success:

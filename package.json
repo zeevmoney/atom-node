@@ -1,8 +1,8 @@
 {
   "name": "atom-node",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "IronSource Atom NodeJS SDK",
-  "readme": "../README.md",
+  "readmeFilename": "README.md",
   "main": "src/index.js",
   "scripts": {
     "test": "mocha",
@@ -36,8 +36,8 @@
     "mocha": "^3.1.0",
     "mocha-lcov-reporter": "^1.2.0",
     "nock": "^9.0.2",
-    "node-uuid": "^1.4.7",
     "sinon": "^1.17.6",
-    "sinon-chai": "^2.8.0"
+    "sinon-chai": "^2.8.0",
+    "uuid": "^3.0.1"
   }
 }
