@@ -17,7 +17,7 @@ atom-node is the official [ironSource.atom](http://www.ironsrc.com/data-flow-man
 
 ### Installation using npm
 ```sh
-$ npm install --save
+$ npm install atom-node --save
 ```
 
 ## Usage
