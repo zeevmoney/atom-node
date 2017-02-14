@@ -49,8 +49,8 @@ class Tracker {
     this.params.bulkLen = !!params.bulkLen ? params.bulkLen : config.BULK_LENGTH;
     this.params.bulkSize = !!params.bulkSize ? params.bulkSize * 1024 : config.BULK_SIZE;
     /* istanbul ignore next */
-    this.params.onError = params.onError || function (err) {
-        self.logger.error(`[${TAG}] onError message: ${err.message}, status: ${err.status}`);
+    this.params.onError = params.onError || function (err, data) {
+        self.logger.error(`[${TAG}] onError message: ${err.message}, status: ${err.status} data: ${JSON.stringify(data)}`);
       };
     this.params.flushOnExit = typeof params.flushOnExit !== 'undefined' ? params.flushOnExit : true;
 
@@ -248,15 +248,15 @@ class Tracker {
         .catch((err) => {
           this.logger.debug(`[${TAG}] flush attempt #${number} for stream: '${stream}' failed due to "${err.message}" (status ${err.status})`);
           if (err.status >= 500) {
-            retry(err)
+            retry({msg: err, data: payload})
           } else {
             /* istanbul ignore next */
-            throw err;
+            throw {msg: err, data: payload}
           }
         });
     }, this.retryOptions).then(Promise.resolve)
       .catch((err) => {
-        this.params.onError(err)
+        this.params.onError(err.msg, err.data)
       });
   }
 }

@@ -38,8 +38,9 @@ const params = {
   flushInterval: 10, // Optional, Flushing interval in seconds
   bulkLen: 1000, // Optional, Max count for events to send
   bulkSize: 128, // Optional, Max size of data in Kb
-  onError: (err) => {
+  onError: (err, data) => {
     console.log(`failed sending, ${err}`); // Optional, Callback that Will be called after max retries fail.
+    // Handle data...
   }
 }
 let tracker = new AtomTracker(params);
@@ -54,7 +55,8 @@ If you want to handle the error otherwise just overwrite the onError function li
 ```js
 const AtomTracker = require('atom-node').Tracker;
 const params = {
-  onError: (err) => {
+  onError: (err, data) => {
+      // data contains the payload object that was sent (including stream, data, auth, etc...)
       return Promise.reject(err);
   }
 }
@@ -134,6 +136,7 @@ atom.putEvents(batchPayload).then(function (res) {
 
 ### v1.5.2
 - Fixed broken headers
+- Added more parameters to the onError func
 
 ### v1.5.1
 - Updated npm package conf
