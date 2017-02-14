@@ -1,4 +1,5 @@
 # ironSource.atom SDK for Node-JS
+
 [![License][license-image]][license-url]
 [![Docs][docs-image]][docs-url]
 [![Coverage Status][coveralls-image]][coveralls-url]
@@ -7,7 +8,7 @@
 atom-node is the official [ironSource.atom](http://www.ironsrc.com/data-flow-management) SDK for Node.JS Javascript runtime
 
 - [Signup](https://atom.ironsrc.com/#/signup)
-- [Documentation](https://ironsource.github.io/atom-node/)
+- [Documentation][docs-url]
 - [Installation](#installation)
 - [Usage](#usage)
 - [Change Log](#change-log)
@@ -130,6 +131,9 @@ atom.putEvents(batchPayload).then(function (res) {
 ```
 
 ## Change Log
+
+### v1.5.2
+- Fixed broken headers
 
 ### v1.5.1
 - Updated npm package conf

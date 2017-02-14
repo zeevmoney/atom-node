@@ -21,8 +21,6 @@ describe('Request Class', () => {
     before(() => {
       request = new Request({
         endpoint: config.END_POINT,
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION,
         data: {"a": 123},
         stream: "hi"
       });
@@ -31,8 +29,6 @@ describe('Request Class', () => {
     it('should init a Request object with correct parameters', function*() {
       expect(request.params).to.be.eql({
         endpoint: config.END_POINT,
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION,
         data: JSON.stringify({"a": 123}),
         stream: "hi"
       });
@@ -81,8 +77,8 @@ describe('Request Class', () => {
         .post('/check-headers')
         .reply(200, function () {
           return {
-            sdkVersion: this.req.headers.sdkversion,
-            sdkType: this.req.headers.sdktype
+            sdkVersion: this.req.headers['x-ironsource-atom-sdk-version'],
+            sdkType: this.req.headers['x-ironsource-atom-sdk-type']
           }
         });
     });
@@ -93,8 +89,6 @@ describe('Request Class', () => {
     it('should send POST request successfully', function*() {
       let request = new Request({
         endpoint: config.END_POINT + "ok",
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION,
         data: {"MOCK": "DATA"},
         auth: "YULIE",
         stream: "OK"
@@ -109,8 +103,6 @@ describe('Request Class', () => {
     it('should handle POST request auth error', function*() {
       let request = new Request({
         endpoint: config.END_POINT + "bad-auth",
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION,
         data: {"a": 123},
         auth: "BAD_AUTH",
         stream: "STREAM_WITH_BAD_AUTH"
@@ -127,8 +119,6 @@ describe('Request Class', () => {
     it('should handle POST request connection error', function*() {
       let request = new Request({
         endpoint: config.END_POINT + "no-connection",
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION,
         data: {"a": 123},
         auth: "BAD_AUTH",
         stream: "CONNECTION_ERROR"
@@ -145,8 +135,6 @@ describe('Request Class', () => {
     it('should handle POST request unknown error', function*() {
       let request = new Request({
         endpoint: config.END_POINT + "unknown-error",
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION,
         data: {"a": 123},
         auth: "BAD_AUTH",
         stream: "UNKNOWN_ERROR"
@@ -163,16 +151,14 @@ describe('Request Class', () => {
     it('should validate POST request headers', function*() {
       let request = new Request({
         endpoint: config.END_POINT + "check-headers",
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION,
         data: {"a": 123},
         auth: "GOOD_AUTH",
         stream: "OK"
       });
       let response = yield request.post();
       let headers = JSON.parse(response.message);
-      expect(headers.sdkVersion).to.eql(config.SDK_VERSION);
-      expect(headers.sdkType).to.eql(config.SDK_TYPE);
+      expect(headers.sdkVersion).to.eql(config.HEADERS['x-ironsource-atom-sdk-version']);
+      expect(headers.sdkType).to.eql(config.HEADERS['x-ironsource-atom-sdk-type']);
     });
 
   });
@@ -194,8 +180,8 @@ describe('Request Class', () => {
         .get('/?check-headers=GET_TEST')
         .reply(200, function () {
           return {
-            sdkVersion: this.req.headers.sdkversion,
-            sdkType: this.req.headers.sdktype
+            sdkVersion: this.req.headers['x-ironsource-atom-sdk-version'],
+            sdkType: this.req.headers['x-ironsource-atom-sdk-type']
           }
         });
 
@@ -231,8 +217,6 @@ describe('Request Class', () => {
     it('should send GET request successfully', function*() {
       let request = new Request({
         endpoint: config.END_POINT + "ok",
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION,
         data: {"a": 123},
         stream: "OK"
       });
@@ -246,8 +230,6 @@ describe('Request Class', () => {
     it('should handle GET request auth error', function*() {
       let request = new Request({
         endpoint: config.END_POINT + "bad-auth",
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION,
         data: {"a": 123},
         auth: "BAD_AUTH",
         stream: "STREAM_WITH_BAD_AUTH"
@@ -264,8 +246,6 @@ describe('Request Class', () => {
     it('should handle GET request bad connection error', function*() {
       let request = new Request({
         endpoint: config.END_POINT + "no-connection",
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION,
         data: {"a": 123},
         auth: "BAD_AUTH",
         stream: "CONNECTION_ERROR"
@@ -282,8 +262,6 @@ describe('Request Class', () => {
     it('should handle GET request unknown error', function*() {
       let request = new Request({
         endpoint: config.END_POINT + "unknown-error",
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION,
         data: {"a": 123},
         auth: "BAD_AUTH",
         stream: "UNKNOWN_ERROR"
@@ -300,16 +278,14 @@ describe('Request Class', () => {
     it('should validate GET request headers', function*() {
       let request = new Request({
         endpoint: config.END_POINT + "check-headers",
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION,
         data: {"a": 123},
         auth: "GOOD_AUTH",
         stream: "OK"
       });
       let response = yield request.get();
       let headers = JSON.parse(response.message);
-      expect(headers.sdkVersion).to.eql(config.SDK_VERSION);
-      expect(headers.sdkType).to.eql(config.SDK_TYPE);
+      expect(headers.sdkVersion).to.eql(config.HEADERS['x-ironsource-atom-sdk-version']);
+      expect(headers.sdkType).to.eql(config.HEADERS['x-ironsource-atom-sdk-type']);
     });
   });
 
@@ -332,8 +308,6 @@ describe('Request Class', () => {
     it('should handle a valid GET health request', function*() {
       let request = new Request({
         endpoint: config.END_POINT,
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION,
         data: {"a": 123},
         auth: "GOOD_AUTH",
         stream: "OK"
@@ -346,8 +320,6 @@ describe('Request Class', () => {
     it('should handle an error in GET health request', function*() {
       let request = new Request({
         endpoint: "https://bad-track.atom-data.io/",
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION
       });
       try {
         yield request.health();

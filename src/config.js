@@ -1,7 +1,5 @@
 module.exports = {
-  SDK_VERSION: 'V1.5.1',
   API_VERSION: 'V1',
-  SDK_TYPE: 'node-js',
   END_POINT: "https://track.atom-data.io/",
   AUTH: '',
   DEBUG: false,
@@ -11,5 +9,9 @@ module.exports = {
   BULK_LENGTH: 1000,
   BULK_SIZE: 128 * 1024,
   // Number of concurrent requests
-  CONCURRENCY: 10
+  CONCURRENCY: 10,
+  HEADERS: {
+    'x-ironsource-atom-sdk-type': 'V1.5.1',
+    'x-ironsource-atom-sdk-version': 'node-js'
+  }
 };
