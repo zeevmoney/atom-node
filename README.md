@@ -5,6 +5,7 @@
 [![Coverage Status][coveralls-image]][coveralls-url]
 [![Build status][travis-image]][travis-url]
 [![npm version][npm-image]][npm-url]  
+
 atom-node is the official [ironSource.atom](http://www.ironsrc.com/data-flow-management) SDK for Node.JS Javascript runtime
 
 - [Signup](https://atom.ironsrc.com/#/signup)
@@ -18,7 +19,7 @@ atom-node is the official [ironSource.atom](http://www.ironsrc.com/data-flow-man
 
 ### Installation using npm
 ```sh
-$ npm install --save
+$ npm install atom-node --save
 ```
 
 ## Usage
@@ -194,7 +195,7 @@ node example/example.js -h
 ## License
 [MIT](LICENSE)
 
-[example-url]: code/example/example.js
+[example-url]: example/example.js
 [license-image]: https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square
 [license-url]: LICENSE
 [travis-image]: https://travis-ci.org/ironSource/atom-node.svg?branch=master
