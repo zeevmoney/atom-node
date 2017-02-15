@@ -11,7 +11,7 @@ module.exports = {
   // Number of concurrent requests
   CONCURRENCY: 10,
   HEADERS: {
-    'x-ironsource-atom-sdk-type': 'V1.5.1',
+    'x-ironsource-atom-sdk-type': 'V1.5.2',
     'x-ironsource-atom-sdk-version': 'node-js'
   }
 };
