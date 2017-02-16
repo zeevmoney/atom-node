@@ -1,5 +1,4 @@
 'use strict';
-// todo: done with class, change docs
 const config = require('./../config');
 const Request = require('./request.class');
 const Promise = require('bluebird');

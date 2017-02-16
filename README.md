@@ -138,6 +138,7 @@ atom.putEvents(batchPayload).then(function (res) {
 ### v1.5.2
 - Fixed broken headers
 - Added more parameters to the onError func
+- Added Limits to SDK Bulk Length and Bulk Size & Flush Interval
 
 ### v1.5.1
 - Updated npm package conf

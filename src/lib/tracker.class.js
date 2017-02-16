@@ -45,9 +45,42 @@ class Tracker {
     let self = this;
 
     // Flush logic parameters
-    this.params.flushInterval = !!params.flushInterval ? params.flushInterval * 1000 : config.FLUSH_INTERVAL;
-    this.params.bulkLen = !!params.bulkLen ? params.bulkLen : config.BULK_LENGTH;
-    this.params.bulkSize = !!params.bulkSize ? params.bulkSize * 1024 : config.BULK_SIZE;
+
+    if (typeof params.flushInterval != 'undefined') {
+      if (params.flushInterval < 1) {
+        this.logger.error(`[${TAG}] Invalid FlushInterval, must be bigger than 1, setting it to ${config.FLUSH_INTERVAL/1000} seconds`);
+        this.params.flushInterval = config.FLUSH_INTERVAL;
+      } else {
+        this.params.flushInterval = params.flushInterval * 1000;
+      }
+    } else {
+      this.params.flushInterval = config.FLUSH_INTERVAL;
+    }
+
+    if (typeof params.bulkLen != 'undefined') {
+      // Above or under the limit
+      if (params.bulkLen > config.BULK_LENGTH_LIMIT || params.bulkLen < 1) {
+        this.logger.error(`[${TAG}] Invalid Bulk length, must between 1 to ${config.BULK_LENGTH_LIMIT}, setting it to ${config.BULK_LENGTH}`);
+        this.params.bulkLen = config.BULK_LENGTH;
+      } else {
+        this.params.bulkLen = params.bulkLen;
+      }
+    } else {
+      this.params.bulkLen = config.BULK_LENGTH;
+    }
+
+    if (typeof params.bulkSize != 'undefined') {
+      // Above or under the limit
+      if (params.bulkSize > config.BULK_SIZE_LIMIT || params.bulkSize < 1) {
+        this.logger.error(`[${TAG}] Invalid Bulk size, must between 1KB to ${config.BULK_SIZE_LIMIT}KB, setting it to ${config.BULK_SIZE}KB`);
+        this.params.bulkSize = config.BULK_SIZE;
+      } else {
+        this.params.bulkSize = params.bulkSize * 1024;
+      }
+    } else {
+      this.params.bulkSize = config.BULK_SIZE;
+    }
+
     /* istanbul ignore next */
     this.params.onError = params.onError || function (err, data) {
         self.logger.error(`[${TAG}] onError message: ${err.message}, status: ${err.status} data: ${JSON.stringify(data)}`);
