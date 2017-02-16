@@ -27,8 +27,8 @@ $ npm install atom-node --save
 ### High Level SDK - "Tracker"
 The tracker is used for sending events to Atom based on several conditions
 - Every 10 seconds (default)
-- Number of accumulated events has reached 1000 (default)
-- Size of accumulated events has reached 128Kb (default)  
+- Number of accumulated events has reached 250 (default)
+- Size of accumulated events has reached 128KB (default)  
 Case of server side failure (500) the tracker uses an exponential back off mechanism with jitter.
 For a list of all available tracker config options, check the [docs](https://ironsource.github.io/atom-node/)
 ```js
