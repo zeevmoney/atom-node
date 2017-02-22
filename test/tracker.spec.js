@@ -43,6 +43,22 @@ describe('Tracker Class', function () {
       expect(otherTracker.params).to.have.deep.property('flushOnExit', false);
       expect(otherTracker.params.onError).to.be.instanceof(Object);
     });
+
+    it('Should check tracker constructor default parameters', function () {
+      let params = {
+        flushInterval: 0,
+        bulkLen: 99999,
+        bulkSize: 999999,
+      };
+
+      let otherTracker = new Tracker(params);
+      expect(otherTracker.params).to.have.deep.property('flushInterval', config.FLUSH_INTERVAL);
+      expect(otherTracker.params).to.have.deep.property('bulkLen', config.BULK_LENGTH);
+      expect(otherTracker.params).to.have.deep.property('bulkSize', config.BULK_SIZE);
+      expect(otherTracker.params).to.have.deep.property('concurrency', 2);
+      expect(otherTracker.params).to.have.deep.property('flushOnExit', true);
+      expect(otherTracker.params.onError).to.be.instanceof(Object);
+    });
   });
 
   describe('Track method tests', function () {
@@ -84,8 +100,8 @@ describe('Tracker Class', function () {
       let clock = sinon.useFakeTimers();
       let tracker = new Tracker({
         flushInterval: 10,
-        bulkLen: 100000,
-        bulkSize: 100000,
+        bulkLen: config.BULK_LENGTH_LIMIT,
+        bulkSize: config.BULK_SIZE_LIMIT,
       });
       let i = 0;
       while (i < 200) {
@@ -120,8 +136,8 @@ describe('Tracker Class', function () {
 
       let tracker = new Tracker({
         flushInterval: 10000,
-        bulkLen: 100000,
-        bulkSize: 10000,
+        bulkLen: config.BULK_LENGTH_LIMIT,
+        bulkSize: config.BULK_SIZE_LIMIT,
         flushOnExit: true
       });
 
@@ -143,8 +159,8 @@ describe('Tracker Class', function () {
     it('should flush everything when flush() has been called', function*() {
       let tracker = new Tracker({
         flushInterval: 1000000,
-        bulkLen: 100000,
-        bulkSize: 10000,
+        bulkLen: config.BULK_LENGTH_LIMIT,
+        bulkSize: config.BULK_SIZE_LIMIT,
         flushOnExit: false
       });
 

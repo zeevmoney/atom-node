@@ -9,7 +9,7 @@
 atom-node is the official [ironSource.atom](http://www.ironsrc.com/data-flow-management) SDK for Node.JS Javascript runtime
 
 - [Signup](https://atom.ironsrc.com/#/signup)
-- [Documentation](https://ironsource.github.io/atom-node/)
+- [Documentation][docs-url]
 - [Installation](#installation)
 - [Usage](#usage)
 - [Change Log](#change-log)
@@ -27,8 +27,8 @@ $ npm install atom-node --save
 ### High Level SDK - "Tracker"
 The tracker is used for sending events to Atom based on several conditions
 - Every 10 seconds (default)
-- Number of accumulated events has reached 1000 (default)
-- Size of accumulated events has reached 128Kb (default)  
+- Number of accumulated events has reached 250 (default)
+- Size of accumulated events has reached 128KB (default)  
 Case of server side failure (500) the tracker uses an exponential back off mechanism with jitter.
 For a list of all available tracker config options, check the [docs](https://ironsource.github.io/atom-node/)
 ```js
@@ -39,8 +39,9 @@ const params = {
   flushInterval: 10, // Optional, Flushing interval in seconds
   bulkLen: 1000, // Optional, Max count for events to send
   bulkSize: 128, // Optional, Max size of data in Kb
-  onError: (err) => {
+  onError: (err, data) => {
     console.log(`failed sending, ${err}`); // Optional, Callback that Will be called after max retries fail.
+    // Handle data...
   }
 }
 let tracker = new AtomTracker(params);
@@ -55,7 +56,8 @@ If you want to handle the error otherwise just overwrite the onError function li
 ```js
 const AtomTracker = require('atom-node').Tracker;
 const params = {
-  onError: (err) => {
+  onError: (err, data) => {
+      // data contains the payload object that was sent (including stream, data, auth, etc...)
       return Promise.reject(err);
   }
 }
@@ -132,6 +134,11 @@ atom.putEvents(batchPayload).then(function (res) {
 ```
 
 ## Change Log
+
+### v1.5.2
+- Fixed broken headers
+- Added more parameters to the onError func
+- Added Limits to SDK Bulk Length and Bulk Size & Flush Interval
 
 ### v1.5.1
 - Updated npm package conf

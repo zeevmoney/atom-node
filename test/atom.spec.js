@@ -19,8 +19,6 @@ describe('Atom Class', () => {
         endpoint: config.END_POINT,
         apiVersion: config.API_VERSION,
         auth: config.AUTH,
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION,
         debug: config.DEBUG,
         logger: config.LOGGER
       })
@@ -68,8 +66,6 @@ describe('Atom Class', () => {
         data: "data",
         bulk: false,
         endpoint: config.END_POINT,
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION
       });
     });
     it('should generate right data for putEvent GET request', function*() {
@@ -89,8 +85,6 @@ describe('Atom Class', () => {
         bulk: false,
         method: 'GET',
         endpoint: config.END_POINT,
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION
       });
     });
     it('should generate right data for putEvents POST request', function*() {
@@ -108,8 +102,6 @@ describe('Atom Class', () => {
         data: "[\"data\"]",
         bulk: true,
         endpoint: config.END_POINT + 'bulk',
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION
       });
     })
     it('should throw error for putEvent missing params', function*() {
@@ -166,8 +158,6 @@ describe('Atom Class', () => {
         apiVersion: config.API_VERSION,
         data: undefined,
         endpoint: config.END_POINT + 'health',
-        sdkType: config.SDK_TYPE,
-        sdkVersion: config.SDK_VERSION
       });
     });
 

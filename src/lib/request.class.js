@@ -21,8 +21,6 @@ class Request {
    * @constructor
    * @param {Object} params - Request class parameters.
    * @param {String} params.endpoint - The Atom endpoint we send to.
-   * @param {String} params.sdkType - Atom SDK type header
-   * @param {String} params.sdkVersion - Atom SDK version header
    * @param {(String|Array|Object)} params.data - Payload that will be delivered to Atom.
    * @param {String} params.stream - Atom stream name
    * @param {String} [params.auth] - Atom Stream HMAC auth key
@@ -42,10 +40,7 @@ class Request {
       }
     }
 
-    this.headers = {
-      sdkType: this.params.sdkType,
-      sdkVersion: this.params.sdkVersion
-    };
+    this.headers = config.HEADERS;
   };
 
   /**

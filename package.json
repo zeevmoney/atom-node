@@ -1,6 +1,6 @@
 {
   "name": "atom-node",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "IronSource Atom NodeJS SDK",
   "readmeFilename": "README.md",
   "main": "src/index.js",

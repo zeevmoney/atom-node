@@ -1,5 +1,4 @@
 'use strict';
-// todo: done with class, change docs
 const config = require('./../config');
 const Request = require('./request.class');
 const Promise = require('bluebird');
@@ -13,8 +12,6 @@ class IronSourceAtom {
    * @param {String} [options.endpoint] - Atom API url
    * @param {String} [options.auth] - Atom stream HMAC auth key
    * @param {String} [options.apiVersion] - Atom API version (shouldn't be changed).
-   * @param {String} [options.sdkVersion] - Atom SDK Version (shouldn't be changed).
-   * @param {String} [options.sdkType] - Atom SDK Type (shouldn't be changed).
    * @param {Object} [options.logger=console] - Alternative Logger (Bunyan or anything else)
    * @param {Boolean} [options.debug=false] - Enable / disable debug
    *
@@ -25,8 +22,6 @@ class IronSourceAtom {
       endpoint: config.END_POINT,
       apiVersion: config.API_VERSION,
       auth: config.AUTH,
-      sdkType: config.SDK_TYPE,
-      sdkVersion: config.SDK_VERSION,
       debug: config.DEBUG,
       logger: config.LOGGER
     }, options);
@@ -85,8 +80,6 @@ class IronSourceAtom {
     if (!params.data) return Promise.reject(new AtomError('Data is required', 400));
     params.apiVersion = this.options.apiVersion;
     params.auth = this.options.auth;
-    params.sdkVersion = this.options.sdkVersion;
-    params.sdkType = this.options.sdkType;
     params.endpoint = this.options.endpoint;
     params.bulk = false;
     let request = new Request(params);
@@ -146,8 +139,6 @@ class IronSourceAtom {
     }
 
     paramsCopy.apiVersion = this.options.apiVersion;
-    paramsCopy.sdkVersion = this.options.sdkVersion;
-    paramsCopy.sdkType = this.options.sdkType;
     paramsCopy.endpoint = this.options.endpoint + 'bulk';
     paramsCopy.auth = this.options.auth;
     paramsCopy.bulk = true;
@@ -170,8 +161,6 @@ class IronSourceAtom {
     let params = {
       endpoint: this.options.endpoint,
       apiVersion: this.options.apiVersion,
-      sdkVersion: this.options.sdkVersion,
-      sdkType: this.options.sdkType
     };
     let request = new Request(params);
     return request.health();
