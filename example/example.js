@@ -42,7 +42,7 @@ function runAllExamples() {
 function putEventExamples() {
 
   let params = {
-    stream: "ibtest",
+    stream: "stream_name",
     data: {
       strings: "hi",
       ints: 123,
@@ -102,7 +102,7 @@ function healthExample() {
 
 function putEventsExample() {
   let batchPayload = {
-    stream: "ibtest",
+    stream: "stream_name",
     data: [],
   };
 
@@ -151,7 +151,7 @@ function trackerExample() {
       ts: new Date(),
       batch: true
     };
-    tracker.track("ibtest", data).then(function (data) {
+    tracker.track("STREAM_NAME", data).then(function (data) {
       typeof data[0] !== 'undefined' ? console.log("[TRACKER EXAMPLE] Example tracker results:", data) : null;
     });
   }
