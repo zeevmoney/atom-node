@@ -135,6 +135,11 @@ atom.putEvents(batchPayload).then(function (res) {
 
 ## Change Log
 
+### v1.5.3
+- Changed flow control to make it more clear and reliable
+- 
+
+
 ### v1.5.2
 - Fixed broken headers
 - Added more parameters to the onError func

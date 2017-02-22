@@ -55,7 +55,7 @@ describe('Tracker Class', function () {
       expect(otherTracker.params).to.have.deep.property('flushInterval', config.FLUSH_INTERVAL);
       expect(otherTracker.params).to.have.deep.property('bulkLen', config.BULK_LENGTH);
       expect(otherTracker.params).to.have.deep.property('bulkSize', config.BULK_SIZE);
-      expect(otherTracker.params).to.have.deep.property('concurrency', 2);
+      expect(otherTracker.params).to.have.deep.property('concurrency', config.CONCURRENCY);
       expect(otherTracker.params).to.have.deep.property('flushOnExit', true);
       expect(otherTracker.params.onError).to.be.instanceof(Object);
     });
@@ -76,7 +76,7 @@ describe('Tracker Class', function () {
       Atom.prototype.putEvents.restore();
       Tracker.prototype.flush.restore();
       Tracker.prototype.track.restore();
-      Tracker.prototype._process.restore();
+      Tracker.prototype._flush.restore();
       Tracker.prototype._send.restore();
     });
 
@@ -196,7 +196,7 @@ describe('Tracker Class', function () {
     afterEach(() => {
       Atom.prototype.putEvents.restore();
       Tracker.prototype.flush.restore();
-      Tracker.prototype._process.restore();
+      Tracker.prototype._flush.restore();
     });
 
     it('should trigger the callback if everything fails', function*() {

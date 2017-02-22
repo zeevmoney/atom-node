@@ -11,9 +11,11 @@ module.exports = {
   BULK_SIZE: 128 * 1024,
   BULK_SIZE_LIMIT: 512 * 1024,
   // Number of concurrent requests
-  CONCURRENCY: 2,
+  CONCURRENCY: 10,
+  REQUESTS_IN_FLIGHT: 2,
   HEADERS: {
     'x-ironsource-atom-sdk-type': 'V1.5.2',
     'x-ironsource-atom-sdk-version': 'node-js'
-  }
+  },
+  BACKLOG_SIZE: 20000 //todo set to bulk length limit
 };

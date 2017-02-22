@@ -6,22 +6,26 @@
  */
 
 class LocalStore {
-  constructor() {
+  constructor(backlogSize) {
     this.data = {};
+    this.size = backlogSize;
   }
 
   /**
    * Registers data in the store for a given stream, if it doesn't exist yet it's created
    * @param {String} stream - Atom stream name
    * @param {(String|Object)} data - Payload to be sent
-   * @returns {?Array}
+   * @returns {boolean}
    */
   add(stream, data) {
     if (!this.data[stream]) {
       this.data[stream] = [];
     }
+    if (this.data[stream].length >= this.size) {
+      return false;
+    }
     this.data[stream].push(data);
-    return this.get(stream);
+    return true;
   }
 
   /**
@@ -38,16 +42,20 @@ class LocalStore {
    * Will take the value for a given stream and empty the value from the store
    * useful for flushing the data
    * @param {String} stream - Atom stream name
-   * @throws Will throw an error if stream doesn't exist in storage
+   * @param {Number} [amount] - amount of events to take
    * @returns {!Array}
    */
-  take(stream) {
+  take(stream, amount) {
     let data = this.get(stream);
     if (!data) {
       /* istanbul ignore next */
-      throw new Error(`${stream} does not exist in the store`);
+      return [];
     }
-    return data.splice(0);
+    if (amount) {
+      return data.splice(0, amount);
+    } else {
+      return data.splice(0);
+    }
   }
 
   /**
