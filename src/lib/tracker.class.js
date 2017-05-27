@@ -7,50 +7,64 @@ const config = require('./../config');
 const Atom = require('./atom.class');
 const LocalStore = require('./storage/local.class');
 const TAG = 'TRACKER';
+const EventEmitter = require('events');
 
-class Tracker {
+// todo: fix the docs
+class Tracker extends EventEmitter {
   /**
-   * This class implements a tracker for tracking events to ironSource atom
-   * @param {Object} params
-   * @param {Number} [params.flushInterval=10 seconds] - Data sending interval (in seconds)
-   * @param {Number} [params.bulkLen=1000] - Number of records in each bulk request
-   * @param {Number} [params.bulkSize=128kb] - The maximum bulk size in KB.
-   * @param {callback} [params.onError=See Readme] - Callback that will be invoked with the failed event if maximum retries fail
-   * @param {Boolean} [params.flushOnExit=true] - Whether all data should be flushed on application exit
-   * @param {Object} [params.logger=console] - Override Logger module
-   * @param {Object} [params.backlog=LocalStore] - Backlog module, implementation for the tracker backlog storage
-   * @ppram {Number} [params.concurrency=10] - Number of requests to send concurrently (Promise.Map)
-   * @param {Object} [params.retryOptions] - node-retry(https://github.com/tim-kos/node-retry) options
-   * @param {Number} [params.retryOptions.retries=10] - The maximum amount of times to retry the operation.
-   * @param {Boolean} [params.retryOptions.randomize=true] - Randomizes the timeouts by multiplying with a factor between 1 to 2.
-   * @param {Number} [params.retryOptions.factor=2] - The exponential factor to use.
-   * @param {Number} [params.retryOptions.minTimeout=1 second] - The number of milliseconds before starting the first retry.
-   * @param {Number} [params.retryOptions.maxTimeout=25 minutes] - The maximum number of milliseconds between two retries.
-   * @param {Boolean} [params.debug=false] - Enabled/Disable debug printing
-   * Optional for Atom main object:
-   * @param {String} [params.endpoint] - Endpoint api url
-   * @param {String} [params.auth] - Key for hmac authentication
-   * @param {Number} [params.backlogSize] - Size of tracker backlog
-   * @param {Number} [params.maxInFlight] - Number of concurrent requests in flight.
+   * This class implements a tracker for tracking events to IronSource Atom
+   * @param {Object}   params
+   * @param {Number}   [params.flushInterval=10 seconds] - Data sending interval (in seconds)
+   * @param {Number}   [params.bulkLen=250] - Max Number of records in each bulk request
+   * @param {Number}   [params.bulkSize=128kb] - Maximum bulk size in KB.
+   * @param {Number}   [params.backlogSize=2000] - Size of tracker backlog
+   * @param {Number}   [params.maxInFlight] - Number of concurrent requests in flight.
+   * @param {Object}   [params.logger=console] - Override Logger module
+   * @param {Object}   [params.backlog=LocalStore] - Backlog module, implementation for the tracker backlog storage
+   * @param {Number}   [params.concurrency=2] - Number of requests to send concurrently per stream (Promise.Map)
+   * @param {Boolean}  [params.debug=false] - Enabled/Disable debug printing
+   * @param {Boolean}  [params.isBlocking=true] - Should the .track() method block the caller (won't block the process)
+   * @param {Number}   [params.trackingTimeout=10 seconds] - Tracking timeout in seconds
+   * @param {Object}   [params.retryOptions] - node-retry(https://github.com/tim-kos/node-retry) options
+   * @param {Number}   [params.retryOptions.retries=10] - The maximum amount of times to retry the operation.
+   * @param {Boolean}  [params.retryOptions.randomize=true] - Randomizes the timeouts by multiplying with a factor between 1 to 2.
+   * @param {Number}   [params.retryOptions.factor=2] - The exponential factor to use.
+   * @param {Number}   [params.retryOptions.minTimeout=1 second] - The number of milliseconds before starting the first retry.
+   * @param {Number}   [params.retryOptions.maxTimeout=25 minutes] - The maximum number of milliseconds between two retries.
+   * Optional for Atom main class:
+   * @param {String}   [params.endpoint] - Endpoint api url
+   * @param {String}   [params.auth] - Key for hmac authentication
    * @constructor
    */
   constructor(params) {
+    super();
+
     params = params || {};
     this.params = params || {};
-
     this.params.debug = typeof params.debug !== 'undefined' ? params.debug : config.DEBUG;
+    this.params.isBlocking = typeof params.isBlocking !== 'undefined' ? params.isBlocking : config.IS_BLOCKING;
     this.logger = params.logger || config.LOGGER;
     if (typeof this.logger.toggleLogger === "function") {
       this.logger.toggleLogger(this.params.debug);
     }
     this.backlog = params.backlog || new LocalStore(params.backlogSize || config.BACKLOG_SIZE);
-    let self = this;
 
     // Flush logic parameters
 
-    if (typeof params.flushInterval != 'undefined') {
+    if (typeof params.trackingTimeout !== 'undefined') {
+      if (params.trackingTimeout < 1) {
+        this.logger.error(`[${TAG}] Invalid trackingTimeout, must be >= 1 second, setting default: ${config.TRACKING_TIMEOUT / 1000} seconds`);
+        this.params.trackingTimeout = config.TRACKING_TIMEOUT;
+      } else {
+        this.params.trackingTimeout = params.trackingTimeout * 1000;
+      }
+    } else {
+      this.params.trackingTimeout = config.TRACKING_TIMEOUT;
+    }
+
+    if (typeof params.flushInterval !== 'undefined') {
       if (params.flushInterval < 1) {
-        this.logger.error(`[${TAG}] Invalid FlushInterval, must be bigger than 1, setting it to ${config.FLUSH_INTERVAL / 1000} seconds`);
+        this.logger.error(`[${TAG}] Invalid FlushInterval, must be => 1, setting it to ${config.FLUSH_INTERVAL / 1000} seconds`);
         this.params.flushInterval = config.FLUSH_INTERVAL;
       } else {
         this.params.flushInterval = params.flushInterval * 1000;
@@ -59,7 +73,7 @@ class Tracker {
       this.params.flushInterval = config.FLUSH_INTERVAL;
     }
 
-    if (typeof params.bulkLen != 'undefined') {
+    if (typeof params.bulkLen !== 'undefined') {
       // Above or under the limit
       if (params.bulkLen > config.BULK_LENGTH_LIMIT || params.bulkLen < 1) {
         this.logger.error(`[${TAG}] Invalid Bulk length, must between 1 to ${config.BULK_LENGTH_LIMIT}, setting it to ${config.BULK_LENGTH}`);
@@ -71,7 +85,7 @@ class Tracker {
       this.params.bulkLen = config.BULK_LENGTH;
     }
 
-    if (typeof params.bulkSize != 'undefined') {
+    if (typeof params.bulkSize !== 'undefined') {
       // Above or under the limit
       if (params.bulkSize > config.BULK_SIZE_LIMIT || params.bulkSize < 1) {
         this.logger.error(`[${TAG}] Invalid Bulk size, must between 1KB to ${config.BULK_SIZE_LIMIT}KB, setting it to ${config.BULK_SIZE}KB`);
@@ -83,16 +97,10 @@ class Tracker {
       this.params.bulkSize = config.BULK_SIZE;
     }
 
-    /* istanbul ignore next */
-    this.params.onError = params.onError || function (err, data) {
-        self.logger.error(`[${TAG}] onError message: ${err.message}, status: ${err.status} data: ${JSON.stringify(data)}`);
-      };
-    this.params.flushOnExit = typeof params.flushOnExit !== 'undefined' ? params.flushOnExit : true;
-
     // Processing parameters
     this.params.concurrency = params.concurrency || config.CONCURRENCY;
 
-    // Retry parameters for exponential backoff
+    // Retry parameters for exponential back-off
     this.retryOptions = Object.assign({}, {
       retries: 10,
       randomize: true,
@@ -105,55 +113,59 @@ class Tracker {
     this.lastFlush = Tracker._getTimestamp();
     this.start();
 
-    if (this.params.flushOnExit) {
-      this.exitHandled = false;
-      ['exit', 'SIGINT', 'SIGHUP', 'SIGQUIT', 'SIGABRT', 'SIGTERM']
-        .map((e) => {
-          process.on(e, () => this._exitHandler())
-        });
-    }
+    this.exitHandled = false;
+    ['exit', 'SIGINT', 'SIGHUP', 'SIGQUIT', 'SIGABRT', 'SIGTERM'].map((e) => {
+      process.on(e, () => this.stop());
+    });
 
-    // "Semaphore" pattern limit for in-flight requests
-    this.params.maxInFlight = params.maxInFlight || config.REQUESTS_IN_FLIGHT;
+    // "Semaphore" pattern to limit in-flight requests
+    this.params.maxInFlight = params.maxInFlight || config.MAX_REQUESTS_IN_FLIGHT;
     this.inFlight = 0;
   }
 
+  /**
+   * Start the tracker
+   */
   start() {
     if (this.isRunning) {
       return;
     }
     this.isRunning = true;
+    this.exitHandled = false;
     // Run forever and check if we can flush
     this.processStreams = setInterval(() => {
       this._flush();
     }, 500);
   }
 
-  stop() {
-    this._exitHandler();
-  }
-
-  // todo: Make the tracker emit an on-stop event to drain the backlog
-  // and in order to know when it's empty (used from outside)
-
   /**
-   * Handles graceful shutdown of the Tracker
-   * @private
+   * Stop the tracker, returns a promise once the backlog + inFlight events are emtpy.
+   * @returns {Promise}
    */
-  _exitHandler() {
-    // Prevent multiple exit handlers to be called
-    if (!this.exitHandled) {
-      this.exitHandled = true;
-      this.logger.info(`[${TAG}] Triggered flush due to exit handler`);
-      this._flush(true).then(_ => {
+  stop() {
+    return new Promise((resolve, reject) => {
+      // Prevent multiple exit handlers to be called
+      if (!this.exitHandled) {
+        this.emit("stop");
+        this.exitHandled = true;
         this.isRunning = false;
         clearInterval(this.processStreams);
-      });
-    }
+        this.logger.info(`[${TAG}] Triggered flush due to exit handler`);
+        this._flush(true);
+        this.stopInterval = setInterval(_ => {
+          if (this.inFlight === 0) {
+            clearInterval(this.stopInterval);
+            this.emit("empty");
+            return resolve(true);
+          }
+        }, 500);
+      }
+      return resolve(true);
+    });
   }
 
   /**
-   * Get current time
+   * Get current time in unixtime
    * @return {number}
    * @static
    */
@@ -167,7 +179,6 @@ class Tracker {
    * @private
    */
   _shouldTriggerIntervalFlush() {
-    // console.log("trigger flush:", Tracker._getTimestamp() - this.lastFlush);
     return this.params.flushInterval <= (Tracker._getTimestamp() - this.lastFlush);
   }
 
@@ -181,9 +192,7 @@ class Tracker {
    * @private
    */
   _shouldFlush(stream) {
-    // console.log("should flush", stream);
     let payload = this.backlog.get(stream);
-    // console.log("payload:", payload.length);
     return payload.length && // First, we should not flush an empty array
       (
         payload.length >= this.params.bulkLen || // Flush if we reached desired length (amount of events)
@@ -194,11 +203,14 @@ class Tracker {
 
   /**
    * Track data to Atom, this function returns a Promise which will be resolved only when data is tracked to backlog.
-   * The function rejects the promise in 2 cases: 1. Stream / Data are missing, Tracker has been stopped.
+   * The function rejects the promise in 3 cases:
+   * 1. Stream / Data are missing.
+   * 2. Tracker has been stopped.
+   * 3. Non-blocking mode and trackingTimeout has been reached.
    * @param stream - Atom stream name
    * @param data - Data to track
    * @returns Promise
-   * @example Tracker Example
+   * @example Tracker Example:
    *
    * const AtomTracker = require('atom-node').Tracker;
    * var params = {
@@ -213,34 +225,38 @@ class Tracker {
    * yield tracker.track(stream, data); // Start tracking and empty on the described above conditions
    *
    * // With promise flow control:
-   * Promise.map(someArrayWithEvents, function (data) {
-   *  return tracker.track("STREAM NAME", data)
-   *    .catch(function (err) {
-   *    // Handle error here
-   *  });
-   * }, concurrency: 1}).then(function (data) {
-   *   // By default data will be an array like this: [true, true...]
-   * }).catch(function (err) {
-   *    console.log(`error happened: ${err}`);
-   * });
+   * //todo: add examples in here
    */
   track(stream, data) {
     return new Promise((resolve, reject) => {
-      // todo: make sure it works (calls on error) and edit the docs
-      // if (stream === undefined || stream.length == 0 || data === undefined || data.length == 0) {
-      //   return reject(new Error('Stream name and data are required parameters'));
-      // }
+      if (stream === undefined || stream.length === 0 || data === undefined || data.length === 0) {
+        return reject(new Error('Stream name and data are required parameters'));
+      }
       if (!this.isRunning) {
         return reject(new Error("Tracker has been stopped. Use tracker.start() to start it"));
       }
       // Can't track for any reason
       if (!this._track(stream, data)) {
-        let retry_interval = setInterval(_ => {
+        let trackingTimeout, retryInterval;
+        this.logger.debug("[TRACKER] Setting Interval");
+
+        // Keep trying to track
+        retryInterval = setInterval(_ => {
           if (this._track(stream, data)) {
+            this.logger.debug("[TRACKER] Clearing Interval");
             resolve(true);
-            clearInterval(retry_interval);
+            clearInterval(retryInterval);
+            clearTimeout(trackingTimeout);
           }
         }, 500);
+
+        if (!this.params.isBlocking) {
+          // Non-blocking mode: timeout after X seconds
+          trackingTimeout = setTimeout(_ => {
+            clearInterval(retryInterval);
+            return reject(new Error("Tracking timeout"));
+          }, this.params.trackingTimeout)
+        }
       } else {
         resolve(true);
       }
@@ -248,7 +264,7 @@ class Tracker {
   }
 
   /**
-   * Track data to backlog only if: 1. We didn't reach inFlight limit & we didn't reach the backlog limit.
+   * Track data to backlog only if: We didn't reach inFlight limit & We didn't reach the backlog limit.
    * @param stream - Atom stream name
    * @param data - Data to track
    * @returns {boolean}
@@ -275,15 +291,11 @@ class Tracker {
    * @private
    */
   _flush(forceFlushAll, forceFlushStream) {
-    // console.log("process:", forceFlushAll, forceFlushStream);
     return Promise.map(this.backlog.keys, (stream) => {
       // Force flush all streams or a certain stream
-      if ((forceFlushAll || (forceFlushStream && forceFlushStream == stream)) && !this.backlog.isEmpty(stream)) {
-        console.log("force flush")
-        // this.logger.info(`[${TAG}] flushing stream: ${batchStream} with ${this.backlog.get(batchStream).length} items`);
+      if ((forceFlushAll || (forceFlushStream && forceFlushStream === stream)) && !this.backlog.isEmpty(stream)) {
         return this._send(stream, this.backlog.take(stream));
       } else if (!this._isMaxRequestsInFlight() && this._shouldFlush(stream)) {
-        console.log("flush stream", this._shouldFlush(stream));
         return this._send(stream, this.backlog.take(stream, config.BULK_LENGTH));
       }
       return false;
@@ -292,7 +304,7 @@ class Tracker {
 
   /**
    * Flush data to Atom, this function returns a promise with array of server responses.
-   * Case of error it will not reject the Promise, instead it will call the Tracker onError func.
+   * An error will not reject the Promise but call the 'error' event.
    * @param [batchStream]
    * @returns Promise
    * @example Flush Example
@@ -312,15 +324,13 @@ class Tracker {
    * tracker.flush("MY_STREAM");
    */
   flush(batchStream) {
-    //todo: update doc
-    if (!this.isRunning) {
-      return reject(new Error("Tracker has been stopped. Use tracker.start() to start it"));
-    }
-    return typeof batchStream != "undefined" ? this._flush(false, batchStream) : this._flush(true);
+    return typeof batchStream !== "undefined" ? this._flush(false, batchStream) : this._flush(true);
   }
 
   /**
-   * Sends events to Atom using Atom Class, handles retries and calls a callback on error
+   * Sends events to Atom using Atom Class.
+   * Case of 5xx: emits a retry and retries with exponential back-off.
+   * Case of error emits and event on error.
    * @param stream - Atom Stream Name
    * @param data - Data to track
    * @returns {*|Promise.<T>}
@@ -328,25 +338,23 @@ class Tracker {
    */
   _send(stream, data) {
     let payload = {stream: stream, data: data};
-    // todo: inFlight fix
-    console.log("send", ++this.inFlight);
-    console.log("data length in send", data.length);
+    this.inFlight++;
     this.lastFlush = Tracker._getTimestamp();
-    return promiseRetry((retry, number) => {
+    return promiseRetry((retry, attempt) => {
       return this.atom.putEvents(payload)
         .then((response) => {
-          this.logger.debug(`[${TAG}] attempt: #${number}, stream: '${stream}', sent events: ${payload.data.length} - completed successfully`);
+          this.logger.debug(`[${TAG}] inFlight #: ${this.inFlight}, attempt: #${attempt}, stream: '${stream}', # of events: ${payload.data.length} - completed successfully`);
           if (--this.inFlight <= 0) {
             this.inFlight = 0;
           }
           return response;
         })
         .catch((err) => {
-          this.logger.debug(`[${TAG}] flush attempt #${number} for stream: '${stream}' failed due to "${err.message}" (status ${err.status})`);
+          this.logger.debug(`[${TAG}] inFlight #${this.inFlight}, attempt #${attempt} for stream: '${stream}' failed due to "${err.message}" (status ${err.status})`);
           if (err.status >= 500) {
+            attempt === 1 ? this.emit('retry') : null;
             retry({msg: err, data: payload})
           } else {
-            /* istanbul ignore next */
             throw {msg: err, data: payload}
           }
         });
@@ -355,9 +363,8 @@ class Tracker {
         if (--this.inFlight <= 0) {
           this.inFlight = 0;
         }
-        this.params.onError(err.msg, err.data);
-        // Convert AtomError to regular JS Error
-        // return Promise.reject(new Error(`msg: ${err.msg.message} - status: ${err.msg.status}`));
+        this.emit("error", err.msg.message, err.data);
+        return Promise.resolve(false);
       });
   }
 }
