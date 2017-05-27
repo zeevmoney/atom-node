@@ -29,8 +29,8 @@ The tracker is used for sending events to Atom based on several conditions
 - Every 10 seconds (default)
 - Number of accumulated events has reached 250 (default)
 - Size of accumulated events has reached 128KB (default)  
-Case of server side failure (500) the tracker uses an exponential back off mechanism with jitter.
-For a list of all available tracker config options, check the [docs](https://ironsource.github.io/atom-node/)
+Case of server side failure (500) the tracker uses an exponential back off mechanism with jitter.  
+[For a list of all available tracker config options, check the docs](https://ironsource.github.io/atom-node/Tracker.html)
 ```js
 const AtomTracker = require('atom-node').Tracker;
 co(function*() {
@@ -61,34 +61,40 @@ co(function*() {
   tracker.flush();
 });
 ```
-### Tracker flow control:
+### Tracker Flow Control
 The methods: track() and flush() are decoupled and independent of each other.  
+
 **track() method behaviour:**    
 Tracks data to backlog, returns a Promise which will be resolved only when data is tracked to backlog.  
-The function rejects the promise in 3 cases:
-1. Stream / Data are missing.
+The function rejects the Promise in 3 cases:
+1. Stream and/or Data are missing.
 2. Tracker has been stopped.
 3. In Non-blocking mode and trackingTimeout has been reached.
 
-track() by default is blocking, but you can set it as non-blocking:  
+**track() by default is blocking, but you can set it as non-blocking.**  
 If block is true (the default), block if necessary until a free slot is available.   
 If block is false and timeout is a positive number: blocks at most timeout seconds (10 by default)  
 and emit and error event if no free slot was available within that time.
 
-### Tracker Error handling
+### Tracker Error Handling
 All track() errors need to be handled by a regular try-catch block.  
-All flush() errors are handled by 'error event'.
-[See here for all usage examples](example/example2.js)
-Error event is mandatory and you must listen to it.
+All flush() errors are handled by 'error event'.  
+[See here for all usage examples](example/example2.js)  
+**Error event is mandatory and you must listen to it.**
 ```js
 tracker.on("error", (err, data) => console.log("[EXAMPLE2-GENERATOR] onError function:", err, data));
 ```
-### Tracker events:
+### Tracker Events:
 Except for 'error', the tracker emits this optional events:
-*retry - on first retry to server (500)
+- retry - on first retry to server (500)
 The following are called only when there is a graceful shutdown:  
-*stop  - when stop() is called or when tracker gets a killing signal
-*empty - when the backlog is empty and there are no more in flight msgs 
+- stop  - when stop() is called or when tracker gets a killing signal
+- empty - when the backlog is empty and there are no more in flight msgs
+```js
+tracker.on("stop", _ => console.log("[EXAMPLE2-GENERATOR] tracker stopped"));
+tracker.on("retry", _ => console.log("[EXAMPLE2-GENERATOR] tracker emitted 'retry' event"));
+tracker.on("empty", _ => console.log("[EXAMPLE2-GENERATOR] tracker emitted 'empty' event"));
+```
 
 ### Tracker Backlog
 The tracker is using a simple in memory storage for its [backlog](https://ironsource.github.io/atom-node/LocalStore.html)  
@@ -164,7 +170,7 @@ atom.putEvents(batchPayload).then(function (res) {
 ### v1.6.0
 - Changed flow control to make it more clear and reliable (see [Usage](#usage))
 - Removed FlushOnExit param - tracker will always try to flush on exit
-- Added a tracking timeout option (may cause data loss) - works only on non-blocking mode
+- Added a tracking timeout option - works only on non-blocking mode
 - Added a blocking / non-blocking toggle.
 - Tracker flush mechanism now emits events on: stop, first retry, empty & error
 - onError callback replaced with "error" event.
