@@ -1,6 +1,6 @@
 {
   "name": "atom-node",
-  "version": "1.5.2",
+  "version": "1.6.0",
   "description": "IronSource Atom NodeJS SDK",
   "readmeFilename": "README.md",
   "main": "src/index.js",
@@ -28,7 +28,6 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "chai-as-promised": "^6.0.0",
     "co-mocha": "^1.1.3",
     "coveralls": "^2.11.9",
     "istanbul": "^0.4.3",
