@@ -24,6 +24,6 @@ module.exports = {
     }
   },
   toggleLogger: function (newState) {
-    enabled = newState;
+    enabled = !!newState;
   }
 };
