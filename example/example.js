@@ -1,7 +1,5 @@
 'use strict';
 
-// for npm do -> require('atom-node');
-
 const ISAtom = require('../src').ISAtom;
 const Tracker = require('../src').Tracker;
 const co = require('co');
@@ -11,7 +9,6 @@ const program = require('commander');
 let atom = new ISAtom({
   auth: "YOUR AUTH KEY",
   // endpoint: 'http://127.0.0.1:8000/'
-  // endpoint: 'http://ironBeastELB-staging-1206513949.us-east-1.elb.amazonaws.com/'
 });
 
 program
@@ -131,99 +128,47 @@ function putEventsExample() {
 }
 
 function trackerExample() {
-  const params = {
-    // endpoint: "https://track.atom-data.io/",
-    endpoint: 'http://127.0.0.1:3000/',
-    // endpoint: 'http://ironBeastELB-staging-1206513949.us-east-1.elb.amazonaws.com/',
-    auth: "",
-    debug: true,
-    flushInterval: 34, // Flushing interval in seconds
-    bulkLen: 9, // Max count for events for send
-    bulkSize: 64 // Max size of data for send in Kb
-  };
+  co(function*() {
 
-  let tracker = new Tracker(params);
-
-  for (let i = 0; i < 100000; i++) {
-    let number = Math.random() * (3000 - 3) + 3;
-    let data = {
-      id: i
-      // strings: String(number),
-      // ints: Math.round(number),
-      // floats: number,
-      // ts: new Date(),
-      // batch: true
+    const params = {
+      // endpoint: "https://track.atom-data.io/",
+      endpoint: 'http://127.0.0.1:3000/',
+      auth: "",
+      debug: true,
+      flushInterval: 34, // Flushing interval in seconds
+      bulkLen: 9, // Max count for events for send
+      bulkSize: 64 // Max size of data for send in Kb
     };
-    tracker.track("ibtest", data).then(function (data) {
-      typeof data[0] !== false ? console.log("[TRACKER EXAMPLE] Example tracker results:", data) : null;
-    });
-  }
-  console.log(`[TRACKER EXAMPLE] Sending 10 events to Atom`);
 
-  // for sending events immediately use
-  tracker.flush().then((data) => {
-    typeof data[0] !== 'undefined' ? console.log("[TRACKER EXAMPLE] Example flush results:", data) : null;
+    let tracker = new Tracker(params);
+    tracker.on('error', (err, data) => {
+      // Handle Flush errors in here (write to file for example)
+      console.log(`[TRACKER EXAMPLE] Got Error: ${err} for #${data.data.length} events`);
+    });
+    for (let i = 0; i < 10; i++) {
+      let number = Math.random() * (3000 - 3) + 3;
+      let data = {
+        id: i
+        // strings: String(number),
+        // ints: Math.round(number),
+        // floats: number,
+        // ts: new Date(),
+        // batch: true
+      };
+      try {
+        yield tracker.track("ibtest", data)
+      } catch (err) {
+        console.log(`[TRACKER EXAMPLE] track() method Error: ${err}`);
+      }
+    }
+    console.log(`[TRACKER EXAMPLE] Sending 10 events to Atom`);
+
+    // for sending events immediately use
+    tracker.flush().then((data) => {
+      console.log("[TRACKER EXAMPLE] Example flush results:", data);
+    });
+
+
   });
 
-}
-
-let kibana = {};
-
-let tracker = new Tracker({
-  concurrencyOutGoing: 10,
-  bulkLen: 50,
-  backlogLen: 500, // default to bulkLen
-  maxRetries: Infinity,
-  failures: function (result) {
-    // { result contains, status, reason, and the actual data }
-  }
-});
-
-// Flow control
-let i = 0;
-while (i < 5000) {
-  try {
-    yield tracker.track("HELLO" + i, {
-      timeout: 10, // queue enqueue timeout
-    });
-    i++;
-  } catch (err) {
-    console.log("failed to track event " +  i + ", due:", err);
-    // do something with that
-    // buffer is full or you tried to enqueue to stopped tracker
-  }
-}
-
-// Wait for requests to finish
-yield tracker.stop();
-
-console.log('5000 events sent successfully');
-
-function track(msg) {
-  if (tracker.stopped) return Promise.reject();
-
-  return new Promise(function(resolve, reject) {
-    let res = queue.enqueue(msg)
-      , t = setTimeout(() => {
-      res.cancel();
-      reject("due timeout");
-    }, timeout);
-
-    res.result.then(() => {
-      t.cancel();
-      resolve(true);
-    });
-
-  });
-}
-
-function enqueue(msg) {
-  return {
-    cancel: function() {
-      // ..
-    },
-    result: new Promise(res => {
-
-    })
-  }
 }
