@@ -66,7 +66,7 @@ class Request {
 
     return fetchRequest('get', options)
       .spread((response, body) => {
-        if (response.statusCode == 200) {
+        if (response.statusCode === 200) {
           return Promise.resolve({message: JSON.stringify(body), status: response.statusCode});
         } else if (response.statusCode >= 400 && response.statusCode < 600) {
           throw new AtomError(body, response.statusCode);
@@ -97,7 +97,7 @@ class Request {
 
     return fetchRequest('post', options)
       .spread((response, body) => {
-        if (response.statusCode == 200) {
+        if (response.statusCode === 200) {
           return Promise.resolve({message: JSON.stringify(body), status: response.statusCode});
         } else if (response.statusCode >= 400 && response.statusCode < 600) {
           throw new AtomError(body, response.statusCode);
@@ -117,7 +117,7 @@ class Request {
     };
     return fetchRequest('get', options)
       .spread((response, body) => {
-        if (response.statusCode == 200) {
+        if (response.statusCode === 200) {
           return Promise.resolve({message: "Atom API is up", status: response.statusCode});
         }
         throw new AtomError("Atom API is down", response.statusCode);
@@ -131,7 +131,7 @@ class Request {
    * @private
    */
   static _errorHandler(error) {
-    if (error.name == 'AtomError') {
+    if (error.name === 'AtomError') {
       return Promise.reject(error);
     }
     if (error.code === 'ECONNREFUSED') {

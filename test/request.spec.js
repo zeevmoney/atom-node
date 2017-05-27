@@ -4,8 +4,6 @@ const config = require('../src/config');
 const crypto = require('crypto');
 const Request = require('../src/lib/request.class');
 const chai = require('chai');
-const chaiAsPromised = require("chai-as-promised");
-chai.use(chaiAsPromised);
 const expect = chai.expect;
 const nock = require('nock');
 require('co-mocha');
@@ -107,13 +105,15 @@ describe('Request Class', () => {
         auth: "BAD_AUTH",
         stream: "STREAM_WITH_BAD_AUTH"
       });
+      let error;
       try {
         yield request.post();
-      } catch (error) {
-        expect(error.status).to.eql(401);
-        expect(error.name).to.eql('AtomError');
-        expect(error.message).to.eql(`Auth Error: "STREAM_WITH_BAD_AUTH"`)
+      } catch (err) {
+        error = err;
       }
+      expect(error.status).to.eql(401);
+      expect(error.name).to.eql('AtomError');
+      expect(error.message).to.eql(`Auth Error: "STREAM_WITH_BAD_AUTH"`)
     });
 
     it('should handle POST request connection error', function*() {
@@ -123,13 +123,15 @@ describe('Request Class', () => {
         auth: "BAD_AUTH",
         stream: "CONNECTION_ERROR"
       });
+      let error;
       try {
         yield request.post();
-      } catch (error) {
-        expect(error.message).to.eql('Connection Problem');
-        expect(error.status).to.eql(500);
-        expect(error.name).to.eql('AtomError');
+      } catch (err) {
+        error = err;
       }
+      expect(error.message).to.eql('Connection Problem');
+      expect(error.status).to.eql(500);
+      expect(error.name).to.eql('AtomError');
     });
 
     it('should handle POST request unknown error', function*() {
@@ -139,13 +141,15 @@ describe('Request Class', () => {
         auth: "BAD_AUTH",
         stream: "UNKNOWN_ERROR"
       });
+      let error;
       try {
         yield request.post();
-      } catch (error) {
-        expect(error.message).to.eql(new Error('ALL YOUR BASE ARE BELONG TO US'));
-        expect(error.status).to.eql(400);
-        expect(error.name).to.eql('AtomError');
+      } catch (err) {
+        error = err;
       }
+      expect(error.message).to.eql(new Error('ALL YOUR BASE ARE BELONG TO US'));
+      expect(error.status).to.eql(400);
+      expect(error.name).to.eql('AtomError');
     });
 
     it('should validate POST request headers', function*() {
@@ -250,13 +254,15 @@ describe('Request Class', () => {
         auth: "BAD_AUTH",
         stream: "CONNECTION_ERROR"
       });
+      let error;
       try {
         yield request.get();
-      } catch (error) {
-        expect(error.message).to.eql('Connection Problem');
-        expect(error.status).to.eql(500);
-        expect(error.name).to.eql('AtomError');
+      } catch (err) {
+        error = err;
       }
+      expect(error.message).to.eql('Connection Problem');
+      expect(error.status).to.eql(500);
+      expect(error.name).to.eql('AtomError');
     });
 
     it('should handle GET request unknown error', function*() {
@@ -266,13 +272,15 @@ describe('Request Class', () => {
         auth: "BAD_AUTH",
         stream: "UNKNOWN_ERROR"
       });
+      let error;
       try {
         yield request.get();
-      } catch (error) {
-        expect(error.message).to.eql(new Error('ALL YOUR BASE ARE BELONG TO US'));
-        expect(error.status).to.eql(400);
-        expect(error.name).to.eql('AtomError');
+      } catch (err) {
+        error = err;
       }
+      expect(error.message).to.eql(new Error('ALL YOUR BASE ARE BELONG TO US'));
+      expect(error.status).to.eql(400);
+      expect(error.name).to.eql('AtomError');
     });
 
     it('should validate GET request headers', function*() {
