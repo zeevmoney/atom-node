@@ -212,20 +212,8 @@ class Tracker extends EventEmitter {
    * @returns Promise
    * @example Tracker Example:
    *
-   * const AtomTracker = require('atom-node').Tracker;
-   * var params = {
-   *    auth: "YOUR_HMAC_AUTH_KEY", // Optional, depends on your stream config
-   *    flushInterval: 10, // Optional, Tracker flush interval in seconds
-   *    bulkLen: 50, // Optional, Number of events per bulk (batch)
-   *    bulkSize: 20 // Optional, Size of each bulk in KB
-   * }
-   * let tracker = new AtomTracker(params);
-   * var stream = "MY_STREAM_NAME", // Your target stream name
-   * var data = {id: 1, string_col: "String"} // Data that matches your DB structure
-   * yield tracker.track(stream, data); // Start tracking and empty on the described above conditions
+   * For examples: https://github.com/ironSource/atom-node/tree/master/example
    *
-   * // With promise flow control:
-   * //todo: add examples in here
    */
   track(stream, data) {
     return new Promise((resolve, reject) => {
@@ -343,7 +331,7 @@ class Tracker extends EventEmitter {
     return promiseRetry((retry, attempt) => {
       return this.atom.putEvents(payload)
         .then((response) => {
-          this.logger.debug(`[${TAG}] inFlight #: ${this.inFlight}, attempt: #${attempt}, stream: '${stream}', # of events: ${payload.data.length} - completed successfully`);
+          this.logger.debug(`[${TAG}] inFlight #: ${this.inFlight}, attempt: #${attempt}, stream: '${stream}', events: #${payload.data.length} - completed successfully`);
           if (--this.inFlight <= 0) {
             this.inFlight = 0;
           }

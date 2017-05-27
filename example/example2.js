@@ -7,48 +7,43 @@ let writeStream = fs.createWriteStream('./sdk_errors.log', {flags: 'a+'});
 
 function trackerPromiseMap() {
   function errorFunc(err, data) {
-    console.log(`[EXAMPLE-ERROR]: ${err}`);
+    console.log(`[EXAMPLE2-ON_ERR-FUNC] Got Error: ${err}`);
     writeStream.write(`${JSON.stringify(data)} - ${err} \n`);
   }
 
   const params = {
-    endpoint: "https://track.atom-data.io/",
-    // endpoint: "http://127.0.0.1:3000/",
+    // endpoint: "https://track.atom-data.io/",
+    endpoint: "http://127.0.0.1:3000/",
     auth: "I40iwPPOsG3dfWX30labriCg9HqMfL",
     debug: true,
     flushInterval: 5, // Flushing interval in seconds
     bulkLen: 250, // Max count for events for send
     bulkSize: 512 * 1024, // Max size of data for send in Kb
-    onError: errorFunc
+    trackingTimeout: 2,
+    isBlocking: false,
   };
+
   let i = 0;
   let numOfEvents = 1000;
   let tracker = new Tracker(params);
+  tracker.on("error", errorFunc);
   Promise.map(new Array(numOfEvents), function () {
-    if (i % 10000 == 0) {
-      console.log(`wrote ${i} events to Atom`)
-    }
-    let number = Math.random() * (3000 - 3) + 3;
     let data = {
       id: i++,
-      event_name: "NODE_SDK_TRACKER",
-      strings: String(number),
-      ints: Math.round(number),
-      floats: number,
-      ts: +new Date(),
-      batch: true
     };
-    return tracker.track("ssdkdev_sdkdev.public.zeev", data);
-  }, {concurrency: 1}).then(function (data) {
-    console.log(`Tracked ${data.length} to Atom`);
+    if (i % 10000 === 0) {
+      console.log(`[EXAMPLE2-PROMISE-MAP] So far tracked ${i} events to Atom`)
+    }
+    return tracker.track("stream", data);
+  }, {concurrency: 3}).then(function (data) {
+    console.log(`[EXAMPLE2-PROMISE-MAP] Tracked ${data.length} to Atom`);
     writeStream.write(`Tracked ${data.length} events to atom\n`);
-    writeStream.end('This is the end\n');
   }).catch(function (err) {
-    console.log(`err: ${err}`);
-    writeStream.end('This is the end\n');
+    console.log(`[EXAMPLE2] Track error: ${err}`);
   });
   writeStream.on('finish', () => {
-    console.error('All writes are now complete.');
+    console.log('All writes are now complete.\n');
+    writeStream.end('This is the end\n');
   });
 }
 
@@ -61,21 +56,18 @@ function *trackerGenerator() {
     flushInterval: 32, // Flushing interval in seconds
     bulkLen: 250, // Max count for events for send
     bulkSize: 512 * 1024, // Max size of data for send in Kb
-    onError: function (err, data) {
-      console.log("on error func:", err.message);
-    }
   };
 
+
   let tracker = new Tracker(params);
-  for (let i = 0; i < 10000; i++) {
-    let number = Math.random() * (3000 - 3) + 3;
+  tracker.on("stop", _ => console.log("[EXAMPLE2-GENERATOR] tracked stopped"));
+  tracker.on("retry", _ => console.log("[EXAMPLE2-GENERATOR] tracker emitted 'retry' event"));
+  tracker.on("empty", _ => console.log("[EXAMPLE2-GENERATOR] tracker emitted 'empty' event"));
+  tracker.on("error", (err, data) => console.log("[EXAMPLE2-GENERATOR] onError function:", err));
+
+  for (let i = 0; i < 1000; i++) {
     let data = {
-      id: i,
-      strings: String(number),
-      ints: Math.round(number),
-      floats: number,
-      ts: new Date(),
-      batch: true
+      id: i
     };
     try {
       yield tracker.track("ibtest2", data);
@@ -85,7 +77,7 @@ function *trackerGenerator() {
   }
 }
 
-// Tracker control with generator example
 
 // co(trackerGenerator());
 trackerPromiseMap();
+

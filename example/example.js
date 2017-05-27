@@ -148,12 +148,12 @@ function trackerExample() {
     for (let i = 0; i < 10; i++) {
       let number = Math.random() * (3000 - 3) + 3;
       let data = {
-        id: i
-        // strings: String(number),
-        // ints: Math.round(number),
-        // floats: number,
-        // ts: new Date(),
-        // batch: true
+        id: i,
+        strings: String(number),
+        ints: Math.round(number),
+        floats: number,
+        ts: new Date(),
+        batch: true
       };
       try {
         yield tracker.track("ibtest", data)
@@ -167,7 +167,6 @@ function trackerExample() {
     tracker.flush().then((data) => {
       console.log("[TRACKER EXAMPLE] Example flush results:", data);
     });
-
 
   });
 
