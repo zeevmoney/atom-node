@@ -2,12 +2,14 @@
 const Tracker = require('../src').Tracker;
 const Promise = require('bluebird');
 const co = require('co');
+const async = require('asyncawait/async');
+const await = require('asyncawait/await');
 const fs = Promise.promisifyAll(require("fs"));
 let writeStream = fs.createWriteStream('./sdk_errors.log', {flags: 'a+'});
 
 function trackerPromiseMap() {
   function errorFunc(err, data) {
-    console.log(`[EXAMPLE2-ON_ERR-FUNC] Got Error: ${err}`);
+    console.log(`[EXAMPLE2-PROMISE] Got Error: ${err}`);
     writeStream.write(`${JSON.stringify(data)} - ${err} \n`);
   }
 
@@ -77,7 +79,48 @@ function *trackerGenerator() {
   }
 }
 
+function asyncAwaitTracker() {
+  const params = {
+    // endpoint: "https://track.atom-data.io/",
+    endpoint: 'http://127.0.0.1:3000/',
+    auth: "",
+    debug: true,
+    flushInterval: 32, // Flushing interval in seconds
+    bulkLen: 100, // Max count for events for send
+    bulkSize: 512 * 1024, // Max size of data for send in Kb
+    onError: function (err, data) {
+      console.log("Custom onError func:", err.message);
+    }
+  };
 
-// co(trackerGenerator());
+  let tracker = new Tracker(params);
+  tracker.on("error", (err, data) => console.log("[EXAMPLE2-ASYNCAWAIT] onError function:", err));
+  let i = 0;
+  for (; i < 1000; i++) {
+    let data = {
+      id: i
+    };
+    try {
+      await(tracker.track("stream_name", data));
+    } catch (err) {
+      console.log(err.message);
+    }
+  }
+  return i;
+}
+
+// Tracker with generators example
+co(trackerGenerator());
+
+// Tracker with Promises
 trackerPromiseMap();
 
+// // Tracker with asnycawait lib (you can use regular async await in latest node 7)
+let asyncAwaitExample = async(asyncAwaitTracker);
+asyncAwaitExample()
+  .then((data) => {
+    console.log(`Tracked ${data} events to Atom`);
+  })
+  .catch((err) => {
+    console.log(`Tracker error: ${err}`);
+  });
