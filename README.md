@@ -135,10 +135,13 @@ atom.putEvents(batchPayload).then(function (res) {
 
 ## Change Log
 
-### v1.5.3
-- Changed flow control to make it more clear and reliable
-- 
-
+### v1.6.0
+- Changed flow control to make it more clear and reliable (see [Usage](#usage))
+- Removed FlushOnExit param - tracker will always try to flush on exit
+- Added a tracking timeout option (may cause data loss) - works only on non-blocking mode
+- Added a blocking / non-blocking toggle.
+- Tracker flush mechanism now emits events on: stop, first retry, empty & error
+- onError callback replaced with "error" event.
 
 ### v1.5.2
 - Fixed broken headers
