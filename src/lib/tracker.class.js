@@ -150,7 +150,7 @@ class Tracker extends EventEmitter {
         this.exitHandled = true;
         this.isRunning = false;
         clearInterval(this.processStreams);
-        this.logger.info(`[${TAG}] Triggered flush due to exit handler`);
+        this.logger.debug(`[${TAG}] Triggered flush due to exit handler`);
         this._flush(true);
         this.stopInterval = setInterval(_ => {
           if (this.inFlight === 0) {
@@ -305,7 +305,7 @@ class Tracker extends EventEmitter {
    *
    * // Flush all data and get array of results
    * tracker.flush().then((data) => {
-   *    console.log("[TRACKER EXAMPLE] Example tracker results:", data);
+   *   console.log("[TRACKER EXAMPLE] Example flush results:", data);
    * });
    *
    * // Flush a specific stream:
@@ -317,8 +317,8 @@ class Tracker extends EventEmitter {
 
   /**
    * Sends events to Atom using Atom Class.
-   * Case of 5xx: emits a retry and retries with exponential back-off.
-   * Case of error emits and event on error.
+   * Case of 5xx: emits a 'retry' event and retries with exponential back-off.
+   * Case of error emits a 'error' event with (err, data) args.
    * @param stream - Atom Stream Name
    * @param data - Data to track
    * @returns {*|Promise.<T>}
