@@ -69,16 +69,17 @@ Tracks data to backlog, returns a Promise which will be resolved only when data 
 The function rejects the Promise in 3 cases:
 1. Stream and/or Data are missing.
 2. Tracker has been stopped.
-3. In Non-blocking mode and trackingTimeout has been reached.
+3. In Non-blocking mode and `trackingTimeout` has been reached.
 
 **track() by default is blocking, but you can set it as non-blocking.**  
-If block is true (the default), block if necessary until a free slot is available.   
-If block is false and timeout is a positive number: blocks at most timeout seconds (10 by default)  
+Note: blocking means that it will block new track() calls and not the whole event loop.  
+If block is true (the default) => block if necessary until a free slot is available.   
+If block is false and timeout is a positive number: blocks at most timeout seconds (10 seconds by default)  
 and emit and error event if no free slot was available within that time.
 
 ### Tracker Error Handling
 All track() errors need to be handled by a regular try-catch block.  
-All flush() errors are handled by 'error event'.  
+All flush() errors are handled by `error` event.  
 [See here for all usage examples](example/example2.js)  
 **Error event is mandatory and you must listen to it.**
 ```js
@@ -86,10 +87,10 @@ tracker.on("error", (err, data) => console.log("[EXAMPLE2-GENERATOR] onError fun
 ```
 ### Tracker Events:
 Except for 'error', the tracker emits this optional events:
-- retry - on first retry to server (500)
+- retry - on first retry to server (500)  
 The following are called only when there is a graceful shutdown:  
 - stop  - when stop() is called or when tracker gets a killing signal
-- empty - when the backlog is empty and there are no more in flight msgs
+- empty - when the backlog is empty and there are no more in-flight msgs
 ```js
 tracker.on("stop", _ => console.log("[EXAMPLE2-GENERATOR] tracker stopped"));
 tracker.on("retry", _ => console.log("[EXAMPLE2-GENERATOR] tracker emitted 'retry' event"));
