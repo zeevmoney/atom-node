@@ -34,15 +34,15 @@ describe('Atom Class', () => {
 
   describe('Atom class methods parameter generation', () => {
     before(() => {
-      sinon.stub(Request.prototype, "get", function () {
+      sinon.stub(Request.prototype, "get").callsFake(function () {
         return Promise.resolve(this.params);
       });
 
-      sinon.stub(Request.prototype, "post", function () {
+      sinon.stub(Request.prototype, "post").callsFake(function () {
         return Promise.resolve(this.params);
       });
 
-      sinon.stub(Request.prototype, "health", function () {
+      sinon.stub(Request.prototype, "health").callsFake(function () {
         this.params.endpoint += 'health';
         return Promise.resolve(this.params)
       });

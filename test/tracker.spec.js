@@ -67,7 +67,7 @@ describe('Tracker Class', function () {
     describe('track() method', () => {
 
       before(() => {
-        sinon.stub(Atom.prototype, 'putEvents', function (data) {
+        sinon.stub(Atom.prototype, 'putEvents').callsFake(function (data) {
           return Promise.reject(new AtomError("Y U NO WORK?", 500));
         });
       });
@@ -126,7 +126,7 @@ describe('Tracker Class', function () {
 
     describe('flush() method', () => {
       beforeEach(() => {
-        sinon.stub(Atom.prototype, 'putEvents', function (data) {
+        sinon.stub(Atom.prototype, 'putEvents').callsFake(function (data) {
           return Promise.resolve("200");
         });
         sinon.spy(Tracker.prototype, 'track');
@@ -243,7 +243,7 @@ describe('Tracker Class', function () {
 
     beforeEach(() => {
       let callCount = 1;
-      sinon.stub(Atom.prototype, 'putEvents', function (data) {
+      sinon.stub(Atom.prototype, 'putEvents').callsFake(function (data) {
         if (callCount++ < 6) {
           return Promise.reject(new AtomError("Y U NO WORK?", 500));
         }
@@ -278,7 +278,7 @@ describe('Tracker Class', function () {
         yield tracker._send('streamCallBack', [{a: 1, b: 2, c: 3}]);
       } catch (e) {
       }
-      expect(spy).to.be.called.once;
+      expect(spy).to.have.been.calledOnce;
       expect(spy).to.be.calledWith("Y U NO WORK?", {data: [{a: 1, b: 2, c: 3}], stream: "streamCallBack"})
     });
 
@@ -297,7 +297,7 @@ describe('Tracker Class', function () {
       tracker.on('retry', spy);
       let result = yield tracker._send('streamRetry', [{a: 1, b: 2, c: 3}]);
       expect(result).to.equal('success');
-      expect(spy).to.be.called.once;
+      expect(spy).to.be.calledOnce;
       expect(Atom.prototype.putEvents).to.have.callCount(6);
     });
 
