@@ -29,39 +29,72 @@ The tracker is used for sending events to Atom based on several conditions
 - Every 10 seconds (default)
 - Number of accumulated events has reached 250 (default)
 - Size of accumulated events has reached 128KB (default)  
-Case of server side failure (500) the tracker uses an exponential back off mechanism with jitter.
-For a list of all available tracker config options, check the [docs](https://ironsource.github.io/atom-node/)
+Case of server side failure (500) the tracker uses an exponential back off mechanism with jitter.  
+[For a list of all available tracker config options, check the docs](https://ironsource.github.io/atom-node/Tracker.html)
 ```js
 const AtomTracker = require('atom-node').Tracker;
-const params = {
-  endpoint: "https://track.atom-data.io/", // Optional, Don't change this (unless you have your own DNS CNAME)
-  auth: "YOUR PRE-SHARED HAMC AUTH KEY", // Can be found in Atom Console
-  flushInterval: 10, // Optional, Flushing interval in seconds
-  bulkLen: 1000, // Optional, Max count for events to send
-  bulkSize: 128, // Optional, Max size of data in Kb
-  onError: (err, data) => {
-    console.log(`failed sending, ${err}`); // Optional, Callback that Will be called after max retries fail.
-    // Handle data...
+co(function*() {
+  const params = {
+    endpoint: "https://track.atom-data.io/", // Optional, Don't change this (unless you have your own DNS CNAME)
+    auth: "YOUR PRE-SHARED HAMC AUTH KEY", // Can be found in Atom Console
+    flushInterval: 10, // Optional, Flushing interval in seconds
+    bulkLen: 1000, // Optional, Max count for events to send
+    bulkSize: 128, // Optional, Max size of data in Kb
+  };
+
+  let tracker = new AtomTracker(params);
+  tracker.on('error', (err, data) => {
+    // Handle Flush errors in here (write to file for example)
+    console.log(`[TRACKER EXAMPLE] Got Error: ${err} for #${data.data.length} events`);
+  });
+  for (let i = 0; i < 10; i++) {
+    let data = {
+      id: i
+    };
+    try {
+      yield tracker.track("SOME STREAM", data)
+    } catch (err) {
+      console.log(`[TRACKER EXAMPLE] track() method Error: ${err}`);
+    }
   }
-}
-let tracker = new AtomTracker(params);
-let payload = {"id": 123, "strings": "abcd"};
-tracker.track("STREAM NAME", payload); // Track an event (flush on the described above conditions)
-tracker.flush(); // Flush immediately
+  // For sending events immediately use
+  tracker.flush();
+});
 ```
-### Tracker onError
-The flush and track methods return a promise (array with positive results - see docs/example).   
-Case of failure the onError function will be called, which by default just logs the error to console  
-If you want to handle the error otherwise just overwrite the onError function like this:
+### Tracker Flow Control
+The methods: track() and flush() are decoupled and independent of each other.  
+
+**track() method behaviour:**    
+Tracks data to backlog, returns a Promise which will be resolved only when data is tracked to backlog.  
+The function rejects the Promise in 3 cases:
+1. Stream and/or Data are missing.
+2. Tracker has been stopped.
+3. In Non-blocking mode and `trackingTimeout` has been reached.
+
+**track() by default is blocking, but you can set it as non-blocking.**  
+Note: blocking means that it will block new track() calls and not the whole event loop.  
+If block is true (the default) => block if necessary until a free slot is available.   
+If block is false and timeout is a positive number: blocks at most timeout seconds (10 seconds by default)  
+and emit and error event if no free slot was available within that time.
+
+### Tracker Error Handling
+All track() errors need to be handled by a regular try-catch block.  
+All flush() errors are handled by `error` event.  
+[See here for all usage examples](example/example2.js)  
+**Error event is mandatory and you must listen to it.**
 ```js
-const AtomTracker = require('atom-node').Tracker;
-const params = {
-  onError: (err, data) => {
-      // data contains the payload object that was sent (including stream, data, auth, etc...)
-      return Promise.reject(err);
-  }
-}
-let tracker = new AtomTracker(params);
+tracker.on("error", (err, data) => console.log("[EXAMPLE2-GENERATOR] onError function:", err, data));
+```
+### Tracker Events:
+Except for 'error', the tracker emits this optional events:
+- retry - on first retry to server (500)  
+The following are called only when there is a graceful shutdown:  
+- stop  - when stop() is called or when tracker gets a killing signal
+- empty - when the backlog is empty and there are no more in-flight msgs
+```js
+tracker.on("stop", _ => console.log("[EXAMPLE2-GENERATOR] tracker stopped"));
+tracker.on("retry", _ => console.log("[EXAMPLE2-GENERATOR] tracker emitted 'retry' event"));
+tracker.on("empty", _ => console.log("[EXAMPLE2-GENERATOR] tracker emitted 'empty' event"));
 ```
 
 ### Tracker Backlog
@@ -134,6 +167,14 @@ atom.putEvents(batchPayload).then(function (res) {
 ```
 
 ## Change Log
+
+### v1.6.0
+- Changed flow control to make it more clear and reliable (see [Usage](#usage))
+- Removed FlushOnExit param - tracker will always try to flush on exit
+- Added a tracking timeout option - works only on non-blocking mode
+- Added a blocking / non-blocking toggle.
+- Tracker flush mechanism now emits events on: stop, first retry, empty & error
+- onError callback replaced with "error" event.
 
 ### v1.5.2
 - Fixed broken headers

@@ -4,8 +4,6 @@ const config = require('../src/config');
 const Request = require('../src/lib/request.class');
 const Atom = require('../src').ISAtom;
 const chai = require("chai");
-const chaiAsPromised = require("chai-as-promised");
-chai.use(chaiAsPromised);
 const expect = chai.expect;
 const sinon = require('sinon');
 const Promise = require('bluebird');
@@ -31,21 +29,20 @@ describe('Atom Class', () => {
       let atom = new Atom(options);
       expect(atom.options.endpoint).to.eql(options.endpoint);
       expect(atom.options.auth).to.eql(options.auth);
-
     });
   });
 
   describe('Atom class methods parameter generation', () => {
     before(() => {
-      sinon.stub(Request.prototype, "get", function () {
+      sinon.stub(Request.prototype, "get").callsFake(function () {
         return Promise.resolve(this.params);
       });
 
-      sinon.stub(Request.prototype, "post", function () {
+      sinon.stub(Request.prototype, "post").callsFake(function () {
         return Promise.resolve(this.params);
       });
 
-      sinon.stub(Request.prototype, "health", function () {
+      sinon.stub(Request.prototype, "health").callsFake(function () {
         this.params.endpoint += 'health';
         return Promise.resolve(this.params)
       });
@@ -106,50 +103,55 @@ describe('Atom Class', () => {
     })
     it('should throw error for putEvent missing params', function*() {
       let atom = new Atom();
+      let error;
       try {
         yield atom.putEvent({stream: "test"})
-      } catch (error) {
-        expect(error.message).to.eql('Data is required');
-        expect(error.status).to.eql(400);
-        expect(error.name).to.eql('AtomError');
+      } catch (err) {
+        error = err;
       }
+      expect(error.message).to.eql('Data is required');
+      expect(error.status).to.eql(400);
+      expect(error.name).to.eql('AtomError');
 
       try {
         yield atom.putEvent({})
-      } catch (error) {
-        expect(error.message).to.eql('Stream name is required');
-        expect(error.status).to.eql(400);
-        expect(error.name).to.eql('AtomError');
+      } catch (err) {
+        error = err;
       }
+      expect(error.message).to.eql('Stream name is required');
+      expect(error.status).to.eql(400);
+      expect(error.name).to.eql('AtomError');
+
     });
     it('should throw error for putEvents missing params', function*() {
       let atom = new Atom();
-
+      let error;
       try {
         yield atom.putEvents({stream: "test", data: "data"})
-      } catch (error) {
-        expect(error.message).to.eql('Data must a be a non-empty Array');
-        expect(error.status).to.eql(400);
-        expect(error.name).to.eql('AtomError');
+      } catch (err) {
+        error = err;
       }
+      expect(error.message).to.eql('Data must a be a non-empty Array');
+      expect(error.status).to.eql(400);
+      expect(error.name).to.eql('AtomError');
 
       try {
         yield atom.putEvents({})
-      } catch (error) {
-        expect(error.message).to.eql('Stream name is required');
-        expect(error.status).to.eql(400);
-        expect(error.name).to.eql('AtomError');
+      } catch (err) {
+        error = err;
       }
+      expect(error.message).to.eql('Stream name is required');
+      expect(error.status).to.eql(400);
+      expect(error.name).to.eql('AtomError');
 
       try {
         yield atom.putEvents({stream: "test", data: ["data"], method: 'GET'})
-      } catch (error) {
-        expect(error.message).to.eql('GET is not a valid method for putEvents');
-        expect(error.status).to.eql(400);
-        expect(error.name).to.eql('AtomError');
+      } catch (err) {
+        error = err;
       }
-
-
+      expect(error.message).to.eql('GET is not a valid method for putEvents');
+      expect(error.status).to.eql(400);
+      expect(error.name).to.eql('AtomError');
     });
     it('should generate right data for GET /health method', function*() {
       let atom = new Atom();

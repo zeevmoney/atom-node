@@ -4,8 +4,6 @@ const config = require('../src/config');
 const crypto = require('crypto');
 const Request = require('../src/lib/request.class');
 const chai = require('chai');
-const chaiAsPromised = require("chai-as-promised");
-chai.use(chaiAsPromised);
 const expect = chai.expect;
 const nock = require('nock');
 require('co-mocha');
@@ -52,7 +50,13 @@ describe('Request Class', () => {
   describe('handling POST requests', () => {
     before(() => {
 
-      nock("https://track.atom-data.io")
+      // nock is doing the headers check for us
+      nock("https://track.atom-data.io", {
+        reqheaders: {
+          'x-ironsource-atom-sdk-version': config.HEADERS['x-ironsource-atom-sdk-version'],
+          'x-ironsource-atom-sdk-type': config.HEADERS['x-ironsource-atom-sdk-type']
+        }
+      })
         .post('/ok')
         .reply(200, (uri, requestBody) => {
           let digest = crypto.createHmac('sha256', "YULIE").update(requestBody.data).digest('hex');
@@ -72,13 +76,13 @@ describe('Request Class', () => {
         .replyWithError({code: 'ECONNREFUSED'})
 
         .post('/unknown-error')
-        .replyWithError("ALL YOUR BASE ARE BELONG TO US")
+        .replyWithError('ALL YOUR POST ARE BELONG TO US')
 
         .post('/check-headers')
         .reply(200, function () {
           return {
-            sdkVersion: this.req.headers['x-ironsource-atom-sdk-version'],
-            sdkType: this.req.headers['x-ironsource-atom-sdk-type']
+            sdkVersion: this.reqheaders['x-ironsource-atom-sdk-version'],
+            sdkType: this.reqheaders['x-ironsource-atom-sdk-type']
           }
         });
     });
@@ -107,13 +111,15 @@ describe('Request Class', () => {
         auth: "BAD_AUTH",
         stream: "STREAM_WITH_BAD_AUTH"
       });
+      let error;
       try {
         yield request.post();
-      } catch (error) {
-        expect(error.status).to.eql(401);
-        expect(error.name).to.eql('AtomError');
-        expect(error.message).to.eql(`Auth Error: "STREAM_WITH_BAD_AUTH"`)
+      } catch (err) {
+        error = err;
       }
+      expect(error.status).to.eql(401);
+      expect(error.name).to.eql('AtomError');
+      expect(error.message).to.eql(`Auth Error: "STREAM_WITH_BAD_AUTH"`)
     });
 
     it('should handle POST request connection error', function*() {
@@ -123,13 +129,15 @@ describe('Request Class', () => {
         auth: "BAD_AUTH",
         stream: "CONNECTION_ERROR"
       });
+      let error;
       try {
         yield request.post();
-      } catch (error) {
-        expect(error.message).to.eql('Connection Problem');
-        expect(error.status).to.eql(500);
-        expect(error.name).to.eql('AtomError');
+      } catch (err) {
+        error = err;
       }
+      expect(error.message).to.eql('Connection Problem');
+      expect(error.status).to.eql(500);
+      expect(error.name).to.eql('AtomError');
     });
 
     it('should handle POST request unknown error', function*() {
@@ -139,13 +147,15 @@ describe('Request Class', () => {
         auth: "BAD_AUTH",
         stream: "UNKNOWN_ERROR"
       });
+      let error;
       try {
         yield request.post();
-      } catch (error) {
-        expect(error.message).to.eql(new Error('ALL YOUR BASE ARE BELONG TO US'));
-        expect(error.status).to.eql(400);
-        expect(error.name).to.eql('AtomError');
+      } catch (err) {
+        error = err;
       }
+      expect(error.message.message).to.eql('ALL YOUR POST ARE BELONG TO US');
+      expect(error.status).to.eql(400);
+      expect(error.name).to.eql('AtomError');
     });
 
     it('should validate POST request headers', function*() {
@@ -175,13 +185,17 @@ describe('Request Class', () => {
         });
 
 
-      nock("https://track.atom-data.io")
-        .filteringPath(/\/check-headers\?data=.+/g, '/?check-headers=GET_TEST')
-        .get('/?check-headers=GET_TEST')
+      nock("https://track.atom-data.io", {
+        reqheaders: {
+          'x-ironsource-atom-sdk-version': config.HEADERS['x-ironsource-atom-sdk-version'],
+          'x-ironsource-atom-sdk-type': config.HEADERS['x-ironsource-atom-sdk-type']
+        }
+      }).filteringPath(/\/check-headers-get\?data=.+/g, '/?check-headers-get=GET_TEST')
+        .get('/?check-headers-get=GET_TEST')
         .reply(200, function () {
           return {
-            sdkVersion: this.req.headers['x-ironsource-atom-sdk-version'],
-            sdkType: this.req.headers['x-ironsource-atom-sdk-type']
+            sdkVersion: this.reqheaders['x-ironsource-atom-sdk-version'],
+            sdkType: this.reqheaders['x-ironsource-atom-sdk-type']
           }
         });
 
@@ -206,7 +220,7 @@ describe('Request Class', () => {
       nock("https://track.atom-data.io")
         .filteringPath(/\/unknown-error\?data=.+/g, '/?unknown-error=GET_TEST')
         .get('/?unknown-error=GET_TEST')
-        .replyWithError("ALL YOUR BASE ARE BELONG TO US")
+        .replyWithError('ALL YOUR GET ARE BELONG TO US');
 
     });
     after(() => {
@@ -250,13 +264,15 @@ describe('Request Class', () => {
         auth: "BAD_AUTH",
         stream: "CONNECTION_ERROR"
       });
+      let error;
       try {
         yield request.get();
-      } catch (error) {
-        expect(error.message).to.eql('Connection Problem');
-        expect(error.status).to.eql(500);
-        expect(error.name).to.eql('AtomError');
+      } catch (err) {
+        error = err;
       }
+      expect(error.message).to.eql('Connection Problem');
+      expect(error.status).to.eql(500);
+      expect(error.name).to.eql('AtomError');
     });
 
     it('should handle GET request unknown error', function*() {
@@ -266,18 +282,20 @@ describe('Request Class', () => {
         auth: "BAD_AUTH",
         stream: "UNKNOWN_ERROR"
       });
+      let error;
       try {
         yield request.get();
-      } catch (error) {
-        expect(error.message).to.eql(new Error('ALL YOUR BASE ARE BELONG TO US'));
-        expect(error.status).to.eql(400);
-        expect(error.name).to.eql('AtomError');
+      } catch (err) {
+        error = err;
       }
+      expect(error.message.message).to.eql('ALL YOUR GET ARE BELONG TO US');
+      expect(error.status).to.eql(400);
+      expect(error.name).to.eql('AtomError');
     });
 
     it('should validate GET request headers', function*() {
       let request = new Request({
-        endpoint: config.END_POINT + "check-headers",
+        endpoint: config.END_POINT + "check-headers-get",
         data: {"a": 123},
         auth: "GOOD_AUTH",
         stream: "OK"

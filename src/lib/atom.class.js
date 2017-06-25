@@ -133,7 +133,7 @@ class IronSourceAtom {
 
     if (paramsCopy.method) {
       // Even though it will only send POST we want to notify the client that he is not sending correctly.
-      if (paramsCopy.method.toUpperCase() == 'GET') {
+      if (paramsCopy.method.toUpperCase() === 'GET') {
         return Promise.reject(new AtomError('GET is not a valid method for putEvents', 400));
       }
     }
