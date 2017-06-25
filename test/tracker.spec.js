@@ -15,7 +15,7 @@ const AtomError = require('../src/lib/utils').AtomError;
 require('co-mocha');
 
 describe('Tracker Class', function () {
-  this.timeout(5000);
+  this.timeout(10000);
 
   describe('Tracker class Initialization', () => {
     it('should check correct data on tracker constructor', function () {
@@ -62,19 +62,27 @@ describe('Tracker Class', function () {
     });
   });
 
+  describe('Tracker start() and stop() methods', () => {
+    it('should start only one tracker', function () {
+      let tracker = new Tracker();
+      expect(tracker.start()).to.be.false;
+    });
+    it('should throw error on track() after stop() has been called', function*() {
+      let tracker = new Tracker();
+      tracker.stop();
+      let error;
+      try {
+        yield tracker.track('stream', 'data');
+      } catch (err) {
+        error = err;
+      }
+      expect(error.message).to.eql('Tracker has been stopped. Use tracker.start() to start it');
+    });
+  });
+
   describe('Track and Flush method tests', () => {
 
     describe('track() method', () => {
-
-      before(() => {
-        sinon.stub(Atom.prototype, 'putEvents').callsFake(function (data) {
-          return Promise.reject(new AtomError("Y U NO WORK?", 500));
-        });
-      });
-
-      after(() => {
-        Atom.prototype.putEvents.restore();
-      });
 
       it('should accumulate tracker data backlog', function*() {
         let tracker = new Tracker();
@@ -101,25 +109,73 @@ describe('Tracker Class', function () {
         expect(error.message).to.eql('Stream name and data are required parameters');
       });
 
-      it('should timeout and throw error after tracking timeout has passed', function*() {
-        let params = {
-          flushInterval: 10000,
-          maxInFlight: 1,
-          bulkLen: 1,
-          bulkSize: 1,
-          backlogSize: 1,
-          isBlocking: false,
-          trackingTimeout: 1
-        };
-        let tracker = new Tracker(params);
-        let error;
-        try {
+      describe('track() on blocking mode', () => {
+
+        before(() => {
+          let callCount = 0;
+          sinon.stub(Atom.prototype, 'putEvents').callsFake(function (data) {
+            if (callCount++ < 1) {
+              return Promise.reject(new AtomError("Y U NO WORK?", 500));
+            }
+            return Promise.resolve('success');
+          });
+        });
+
+        after(() => {
+          Atom.prototype.putEvents.restore();
+        });
+
+
+        it('should retry to track forever on blocking mode', function*() {
+          let params = {
+            flushInterval: 1,
+            maxInFlight: 1,
+            bulkLen: 1,
+            bulkSize: 1,
+            backlogSize: 1,
+            isBlocking: true,
+            debug: true
+          };
+          let tracker = new Tracker(params);
           yield tracker.track('some_stream', 'data');
           yield tracker.track('some_stream', 'data');
-        } catch (err) {
-          error = err;
-        }
-        expect(error.message).to.eql('Tracking timeout');
+          expect(tracker.atom.putEvents).to.have.callCount(2);
+
+        });
+      });
+
+      describe('track() on non-blocking mode', () => {
+        before(() => {
+          sinon.stub(Atom.prototype, 'putEvents').callsFake(function (data) {
+            return Promise.reject(new AtomError("Y U NO WORK?", 500));
+          });
+        });
+
+        after(() => {
+          Atom.prototype.putEvents.restore();
+        });
+
+        it('should timeout and throw error after tracking timeout has passed', function*() {
+          let params = {
+            flushInterval: 10000,
+            maxInFlight: 1,
+            bulkLen: 1,
+            bulkSize: 1,
+            backlogSize: 1,
+            isBlocking: false,
+            trackingTimeout: 1
+          };
+          let tracker = new Tracker(params);
+          let error;
+          try {
+            yield tracker.track('some_stream', 'data');
+            yield tracker.track('some_stream', 'data');
+          } catch (err) {
+            error = err;
+          }
+          expect(error.message).to.eql('Tracking timeout');
+        });
+
       });
 
     });

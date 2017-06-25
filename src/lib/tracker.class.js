@@ -9,7 +9,6 @@ const LocalStore = require('./storage/local.class');
 const TAG = 'TRACKER';
 const EventEmitter = require('events');
 
-// todo: fix the docs
 class Tracker extends EventEmitter {
   /**
    * This class implements a tracker for tracking events to IronSource Atom
@@ -24,7 +23,7 @@ class Tracker extends EventEmitter {
    * @param {Number}   [params.concurrency=2] - Number of requests to send concurrently per stream (Promise.Map)
    * @param {Boolean}  [params.debug=false] - Enabled/Disable debug printing
    * @param {Boolean}  [params.isBlocking=true] - Should the .track() method block the caller (won't block the process)
-   * @param {Number}   [params.trackingTimeout=10 seconds] - Tracking timeout in seconds
+   * @param {Number}   [params.trackingTimeout=10 seconds] - Tracking timeout in seconds, ignored if isBlocking=true
    * @param {Object}   [params.retryOptions] - node-retry(https://github.com/tim-kos/node-retry) options
    * @param {Number}   [params.retryOptions.retries=10] - The maximum amount of times to retry the operation.
    * @param {Boolean}  [params.retryOptions.randomize=true] - Randomizes the timeouts by multiplying with a factor between 1 to 2.
@@ -128,7 +127,7 @@ class Tracker extends EventEmitter {
    */
   start() {
     if (this.isRunning) {
-      return;
+      return false;
     }
     this.isRunning = true;
     this.exitHandled = false;
@@ -321,7 +320,7 @@ class Tracker extends EventEmitter {
    * Case of error emits a 'error' event with (err, data) args.
    * @param stream - Atom Stream Name
    * @param data - Data to track
-   * @returns {*|Promise.<T>}
+   * @returns Promise
    * @private
    */
   _send(stream, data) {
@@ -343,6 +342,7 @@ class Tracker extends EventEmitter {
             attempt === 1 ? this.emit('retry') : null;
             retry({msg: err, data: payload})
           } else {
+            /* istanbul ignore next */
             throw {msg: err, data: payload}
           }
         });
