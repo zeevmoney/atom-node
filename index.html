@@ -47,7 +47,8 @@
 <a href="https://ironsource.github.io/atom-node/"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt="Docs"></a>
 <a href="https://coveralls.io/github/ironSource/atom-node?branch=master"><img src="https://coveralls.io/repos/github/ironSource/atom-node/badge.svg?branch=master" alt="Coverage Status"></a>
 <a href="https://travis-ci.org/ironSource/atom-node"><img src="https://travis-ci.org/ironSource/atom-node.svg?branch=master" alt="Build status"></a>
-<a href="https://badge.fury.io/js/atom-node"><img src="https://badge.fury.io/js/atom-node.svg" alt="npm version"></a><br>atom-node is the official <a href="http://www.ironsrc.com/data-flow-management">ironSource.atom</a> SDK for Node.JS Javascript runtime</p>
+<a href="https://badge.fury.io/js/atom-node"><img src="https://badge.fury.io/js/atom-node.svg" alt="npm version"></a>  </p>
+<p>atom-node is the official <a href="http://www.ironsrc.com/data-flow-management">ironSource.atom</a> SDK for Node.JS Javascript runtime</p>
 <ul>
 <li><a href="https://atom.ironsrc.com/#/signup">Signup</a></li>
 <li><a href="https://ironsource.github.io/atom-node/">Documentation</a></li>
@@ -56,32 +57,56 @@
 <li><a href="#change-log">Change Log</a></li>
 <li><a href="#example">Example</a></li>
 </ul>
-<h2>Installation</h2><h3>Installation using npm</h3><pre class="prettyprint source lang-sh"><code>$ npm install --save</code></pre><h2>Usage</h2><h3>High Level SDK - &quot;Tracker&quot;</h3><p>The tracker is used for sending events to Atom based on several conditions</p>
+<h2>Installation</h2><h3>Installation using npm</h3><pre class="prettyprint source lang-sh"><code>$ npm install atom-node --save</code></pre><h2>Usage</h2><h3>High Level SDK - &quot;Tracker&quot;</h3><p>The tracker is used for sending events to Atom based on several conditions</p>
 <ul>
 <li>Every 10 seconds (default)</li>
-<li>Number of accumulated events has reached 1000 (default)</li>
-<li>Size of accumulated events has reached 128Kb (default)<br>Case of server side failure (500) the tracker uses an exponential back off mechanism with jitter.
-For a list of all available tracker config options, check the <a href="https://ironsource.github.io/atom-node/">docs</a><pre class="prettyprint source lang-js"><code>const AtomTracker = require('atom-node').Tracker;
+<li>Number of accumulated events has reached 250 (default)</li>
+<li><p>Size of accumulated events has reached 128KB (default)<br>Case of server side failure (500) the tracker uses an exponential back off mechanism with jitter.<br><a href="https://ironsource.github.io/atom-node/Tracker.html">For a list of all available tracker config options, check the docs</a></p>
+<pre class="prettyprint source lang-js"><code>const AtomTracker = require('atom-node').Tracker;
+co(function*() {
 const params = {
-endpoint: &quot;https://track.atom-data.io/&quot;, // Optional, Don't change this (unless you have your own DNS CNAME)
-auth: &quot;YOUR PRE-SHARED HAMC AUTH KEY&quot;, // Can be found in Atom Console
-flushInterval: 10, // Optional, Flushing interval in seconds
-bulkLen: 1000, // Optional, Max count for events to send
-bulkSize: 128, // Optional, Max size of data in Kb
-onError: (err) => {
-  console.log(`failed sending, ${err}`); // Optional, Callback that Will be called after max retries fail.
-}
-}
+  endpoint: &quot;https://track.atom-data.io/&quot;, // Optional, Don't change this (unless you have your own DNS CNAME)
+  auth: &quot;YOUR PRE-SHARED HAMC AUTH KEY&quot;, // Can be found in Atom Console
+  flushInterval: 10, // Optional, Flushing interval in seconds
+  bulkLen: 1000, // Optional, Max count for events to send
+  bulkSize: 128, // Optional, Max size of data in Kb
+};
+
 let tracker = new AtomTracker(params);
-let payload = {&quot;id&quot;: 123, &quot;strings&quot;: &quot;abcd&quot;};
-tracker.track(&quot;STREAM NAME&quot;, payload); // Track an event (flush on the described above conditions)
-tracker.flush(); // Flush immediately</code></pre><h3>Tracker onError</h3>The flush and track methods return a promise (array with positive results - see docs/example).<br>Case of failure the onError function will be called, which by default just logs the error to console<br>If you want to handle the error otherwise just overwrite the onError function like this:<pre class="prettyprint source lang-js"><code>const AtomTracker = require('atom-node').Tracker;
-const params = {
-onError: (err) => {
-    return Promise.reject(err);
+tracker.on('error', (err, data) => {
+  // Handle Flush errors in here (write to file for example)
+  console.log(`[TRACKER EXAMPLE] Got Error: ${err} for #${data.data.length} events`);
+});
+for (let i = 0; i &lt; 10; i++) {
+  let data = {
+    id: i
+  };
+  try {
+    yield tracker.track(&quot;SOME STREAM&quot;, data)
+  } catch (err) {
+    console.log(`[TRACKER EXAMPLE] track() method Error: ${err}`);
+  }
 }
-}
-let tracker = new AtomTracker(params);</code></pre></li>
+// For sending events immediately use
+tracker.flush();
+});</code></pre><h3>Tracker Flow Control</h3><p>The methods: track() and flush() are decoupled and independent of each other.  </p>
+</li>
+</ul>
+<p><strong>track() method behaviour:</strong><br>Tracks data to backlog, returns a Promise which will be resolved only when data is tracked to backlog.<br>The function rejects the Promise in 3 cases:</p>
+<ol>
+<li>Stream and/or Data are missing.</li>
+<li>Tracker has been stopped.</li>
+<li>In Non-blocking mode and <code>trackingTimeout</code> has been reached.</li>
+</ol>
+<p><strong>track() by default is blocking, but you can set it as non-blocking.</strong><br>Note: blocking means that it will block new track() calls and not the whole event loop.<br>If block is true (the default) =&gt; block if necessary until a free slot is available.<br>If block is false and timeout is a positive number: blocks at most timeout seconds (10 seconds by default)<br>and emit and error event if no free slot was available within that time.</p>
+<h3>Tracker Error Handling</h3><p>All track() errors need to be handled by a regular try-catch block.<br>All flush() errors are handled by <code>error</code> event.<br><a href="example/example2.js">See here for all usage examples</a><br><strong>Error event is mandatory and you must listen to it.</strong></p>
+<pre class="prettyprint source lang-js"><code>tracker.on(&quot;error&quot;, (err, data) => console.log(&quot;[EXAMPLE2-GENERATOR] onError function:&quot;, err, data));</code></pre><h3>Tracker Events:</h3><p>Except for 'error', the tracker emits this optional events:</p>
+<ul>
+<li>retry - on first retry to server (500)<br>The following are called only when there is a graceful shutdown:  </li>
+<li>stop  - when stop() is called or when tracker gets a killing signal</li>
+<li>empty - when the backlog is empty and there are no more in-flight msgs<pre class="prettyprint source lang-js"><code>tracker.on(&quot;stop&quot;, _ => console.log(&quot;[EXAMPLE2-GENERATOR] tracker stopped&quot;));
+tracker.on(&quot;retry&quot;, _ => console.log(&quot;[EXAMPLE2-GENERATOR] tracker emitted 'retry' event&quot;));
+tracker.on(&quot;empty&quot;, _ => console.log(&quot;[EXAMPLE2-GENERATOR] tracker emitted 'empty' event&quot;));</code></pre></li>
 </ul>
 <h3>Tracker Backlog</h3><p>The tracker is using a simple in memory storage for its <a href="https://ironsource.github.io/atom-node/LocalStore.html">backlog</a><br>You can replace it with a custom backlog using the same interface</p>
 <pre class="prettyprint source lang-js"><code>const AtomTracker = require('atom-node').Tracker;
@@ -139,6 +164,19 @@ atom.putEvents(batchPayload).then(function (res) {
 });</p>
 <pre class="prettyprint source"><code>
 ## Change Log
+
+### v1.6.0
+- Changed flow control to make it more clear and reliable (see [Usage](#usage))
+- Removed FlushOnExit param - tracker will always try to flush on exit
+- Added a tracking timeout option - works only on non-blocking mode
+- Added a blocking / non-blocking toggle.
+- Tracker flush mechanism now emits events on: stop, first retry, empty & error
+- onError callback replaced with &quot;error&quot; event.
+
+### v1.5.2
+- Fixed broken headers
+- Added more parameters to the onError func
+- Added Limits to SDK Bulk Length and Bulk Size & Flush Interval
 
 ### v1.5.1
 - Updated npm package conf
@@ -207,7 +245,7 @@ node example/example.js -h
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Tue Jan 03 2017 02:00:29 GMT+0200 (IST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Sun Jun 25 2017 18:42:43 GMT+0300 (IDT)
 </footer>
 
 <script> prettyPrint(); </script>
